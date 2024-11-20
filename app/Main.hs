@@ -274,30 +274,6 @@ data TempInstruction = TempRead { tempAssignID :: TempID
 data TempAssembly = TempAssembly [TempInstruction]
                   deriving (Show)
 
-formatTempInstruction :: TempInstruction -> String
-formatTempInstruction inst = case inst of
-  TempRead var -> "read " ++ var
-  TempRun cmd Nothing -> ">" ++ formatStringParts cmd
-  TempRun cmd (Just inp) -> "<" ++ (formatStringParts inp) ++ ">"
-                            ++ formatStringParts cmd
-  TempAssignRun var cmd Nothing -> var ++ "=" ++ ">" ++ formatStringParts cmd
-  TempAssignRun var cmd (Just inp) -> var ++ "=" ++
-                                      "<" ++ (formatStringParts inp) ++ ">"
-                                     ++ formatStringParts cmd
-  TempAssign var parts -> var ++ "=" ++ formatStringParts parts
-  TempJumpIfRetZero label -> "jz " ++ label
-  TempJump label -> "j " ++ label
-  TempExit -> "exit"
-  TempLabel label -> ":" ++ label
-
-formatStringParts :: [TempPart] -> String
-formatStringParts = concatMap formatStringPart
-
-formatStringPart :: TempPart -> String
-formatStringPart p = case p of
-  TempTextPart s -> s
-  TempIDPart b v -> (if b then "$'" else "$") ++ "{" ++ v ++ "}"
-
 
 -- INTERPRETER
 
@@ -481,9 +457,6 @@ interpretInstruction inst = case inst of
 
 -- PARSER
 
-parseString :: String -> Either P.ParseError [TempInstruction]
-parseString = P.parse instructionsP "input"
-
 parseFile :: FilePath -> IO (Either P.ParseError [TempInstruction])
 parseFile = P.parseFromFile instructionsP
 
@@ -616,8 +589,8 @@ runFile fname readArgs = do
     else do
       res <- parseFile fname
       case res of
-        Left error -> do
-          print error
+        Left errorMessage -> do
+          print errorMessage
           Exit.exitFailure
         Right insts -> do
           let insts' = TempAssign "initial_arguments" [TempTextPart readArgs] : insts
@@ -664,13 +637,13 @@ asmTempToAsm (TempAssembly insts) = (Assembly $ listToSequence insts'', nVars)
           TempIDPart b v -> IDPart b (varMap M.! v)
 
         labelPoss :: M.Map TempLabel Int
-        labelPoss = M.fromList $ ps insts 0
+        labelPoss = M.fromList $ buildPs insts 0
 
-        ps :: [TempInstruction] -> Int -> [(TempLabel, Int)]
-        ps [] _ = []
-        ps (i : is) n = case i of
-          TempLabel label -> (label, n) : ps is n
-          _ -> ps is (n + 1)
+        buildPs :: [TempInstruction] -> Int -> [(TempLabel, Int)]
+        buildPs [] _ = []
+        buildPs (i : is) n = case i of
+          TempLabel label -> (label, n) : buildPs is n
+          _ -> buildPs is (n + 1)
 
         nVars :: Int
         nVars = M.size varMap
