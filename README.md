@@ -5,6 +5,10 @@ its program state to a file, then terminating itself, and later being
 started again by the user, where it will read and continue from the
 saved program state.
 
+**rash is currently in the process of being migrated from a bespoke
+setup and into the wild, and does not work in a well-documented manner
+yet.**
+
 ## Building
 
 Run `cabal build` to build.  This requires the `cabal` tool to be
