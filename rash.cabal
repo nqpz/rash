@@ -1,7 +1,13 @@
 cabal-version:      3.4
 name:               rash
 version:            0.1.0.0
+synopsis:           An asynchronous shell
+license:            AGPL-3.0-or-later
+license-file:       COPYING
+author:             Niels G. W. Serup
+maintainer:         ngws@metanohi.name
 build-type:         Simple
+extra-doc-files:    README.md
 
 common warnings
     ghc-options: -Wall
