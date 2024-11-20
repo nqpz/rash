@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module Main (main) where
 
 -- USER DOCUMENTATION
