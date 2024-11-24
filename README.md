@@ -9,6 +9,9 @@ saved program state.
 setup and into the wild, and does not work in a well-documented manner
 yet.**
 
+For examples programs, please see the results of this search for now:
+https://github.com/search?q=repo%3Aathas%2FEggsML+%22%23%21%2Fusr%2Fbin%2Fenv+rash%22&type=code
+
 ## Building
 
 Run `cabal build` to build.  This requires the `cabal` tool to be
