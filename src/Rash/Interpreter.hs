@@ -22,7 +22,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.List as L
 
 import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
-import Rash.EndModel
+import qualified Rash.EndModel as M
 
 
 -- SETTTINGS
@@ -48,7 +48,7 @@ runProcess cmdAndArgs stdinM = do
   pure (i, stdout)
 
 
-data InterpM a = InterpM { runInterpM :: Context -> State -> IO (a, State)
+data InterpM a = InterpM { runInterpM :: M.Context -> M.State -> IO (a, M.State)
                          }
 
 instance Monad InterpM where
@@ -68,120 +68,120 @@ instance MonadIO InterpM where
     r <- m
     pure (r, s)
 
-getContext :: InterpM Context
+getContext :: InterpM M.Context
 getContext = InterpM $ \c s -> pure (c, s)
 
-getState :: InterpM State
+getState :: InterpM M.State
 getState = InterpM $ \_ s -> pure (s, s)
 
-putState :: State -> InterpM ()
+putState :: M.State -> InterpM ()
 putState s = InterpM $ \_ _ -> pure ((), s)
 
 setPC :: Int -> InterpM ()
 setPC pc = do
   s <- getState
-  putState s { statePC = pc }
+  putState s { M.statePC = pc }
 
 modifyPC :: (Int -> Int) -> InterpM ()
 modifyPC f = do
-  pc <- statePC <$> getState
+  pc <- M.statePC <$> getState
   setPC $ f pc
 
 setExitCode :: Int -> InterpM ()
 setExitCode ec = do
   s <- getState
-  putState s { statePrevExitCode = ec }
+  putState s { M.statePrevExitCode = ec }
 
 getVar :: Int -> InterpM T.Text
 getVar i = do
-  vars <- stateVars <$> getState
+  vars <- M.stateVars <$> getState
   liftIO $ MA.readArray vars i
 
 setVar :: Int -> T.Text -> InterpM ()
 setVar i t = do
-  vars <- stateVars <$> getState
+  vars <- M.stateVars <$> getState
   liftIO $ MA.writeArray vars i t
 
-interpret :: Context -> State -> IO ()
+interpret :: M.Context -> M.State -> IO ()
 interpret c s = fst <$> runInterpM (interpretM 0) c s
 
 interpretM :: Int -> InterpM ()
 interpretM nSteps
   | nSteps > maxNSteps = liftIO $ putStrLn "Too many steps; stopping."
   | otherwise = do
-    pc <- statePC <$> getState
-    Assembly insts <- contextAssembly <$> getContext
+    pc <- M.statePC <$> getState
+    M.Assembly insts <- M.contextAssembly <$> getContext
     if pc >= sequenceLength insts
-      then interpretInstruction Exit
+      then interpretInstruction M.Exit
       else do
       let instCur = insts IA.! pc
       interpretInstruction instCur
       interpretM (nSteps + 1)
 
-emptyState :: Int -> IO State
+emptyState :: Int -> IO M.State
 emptyState nVars = do
   vars <- MA.newArray (0, nVars - 1) (T.pack "")
-  pure State { statePC = 0
-             , stateVars = vars
-             , stateJustRestarted = False
-             , statePrevExitCode = 0
-             }
-
-freezeState :: State -> IO IState
-freezeState st = do
-  vars <- MA.freeze $ stateVars st
-  pure $ IState { iStatePC = statePC st
-                , iStateVars = vars
-                }
-
-thawState :: IState -> IO State
-thawState ist = do
-  vars <- MA.thaw $ iStateVars ist
-  pure $ State { statePC = iStatePC ist
-               , stateVars = vars
-               , stateJustRestarted = True
-               , statePrevExitCode = 0
+  pure M.State { M.statePC = 0
+               , M.stateVars = vars
+               , M.stateJustRestarted = False
+               , M.statePrevExitCode = 0
                }
 
-evalParts :: Sequence Part -> InterpM T.Text
+freezeState :: M.State -> IO M.IState
+freezeState st = do
+  vars <- MA.freeze $ M.stateVars st
+  pure $ M.IState { M.iStatePC = M.statePC st
+                  , M.iStateVars = vars
+                  }
+
+thawState :: M.IState -> IO M.State
+thawState ist = do
+  vars <- MA.thaw $ M.iStateVars ist
+  pure $ M.State { M.statePC = M.iStatePC ist
+                 , M.stateVars = vars
+                 , M.stateJustRestarted = True
+                 , M.statePrevExitCode = 0
+                 }
+
+evalParts :: Sequence M.Part -> InterpM T.Text
 evalParts ps = do
   let ps1 = extractParts ps
       ps2 = sequenceToList ps1
   ps3 <- mapM id ps2
   pure $ T.concat ps3
 
-extractParts :: Sequence Part -> Sequence (InterpM T.Text)
+extractParts :: Sequence M.Part -> Sequence (InterpM T.Text)
 extractParts = IA.amap extractPart
 
-extractPart :: Part -> InterpM T.Text
+extractPart :: M.Part -> InterpM T.Text
 extractPart p = case p of
-  TextPart t -> pure t
-  IDPart b v -> do r <- getVar v
-                   pure $ if b then shEsc r else r
+  M.TextPart t -> pure t
+  M.IDPart b v -> do r <- getVar v
+                     pure $ if b then shEsc r else r
           where shEsc = TE.decodeUtf8 . TSE.bytes . TSE.sh . TE.encodeUtf8
 
-interpretInstruction :: Instruction -> InterpM ()
+interpretInstruction :: M.Instruction -> InterpM ()
 interpretInstruction inst = case inst of
-  Read var -> do
+  M.Read var -> do
     s <- getState
     c <- getContext
 
-    if stateJustRestarted s
+    if M.stateJustRestarted s
       then do
-      setVar var $ contextReadArgs c
-      putState s { stateJustRestarted = False }
+      setVar var $ M.contextReadArgs c
+      putState s { M.stateJustRestarted = False }
       modifyPC (+ 1)
       setExitCode 0
 
       else do
-      let paths = contextPaths c
-          asm = contextAssembly c
+      let paths = M.contextPaths c
+          asm = M.contextAssembly c
       iState <- liftIO $ freezeState s
-      liftIO $ writeFile (pathASM paths) (show asm)
-      liftIO $ writeFile (pathState paths) (show iState)
+      liftIO $ writeFile (M.pathASM paths) (show asm)
+      liftIO $ writeFile (M.pathState paths) (show iState)
       liftIO Exit.exitSuccess
 
-  Run cmd stdinM -> do
+  M.Run cmd stdinM -> do
     cmd' <- evalParts cmd
     stdinM' <- case stdinM of
       Nothing -> pure Nothing
@@ -191,7 +191,7 @@ interpretInstruction inst = case inst of
     modifyPC (+ 1)
     setExitCode ec
 
-  AssignRun v cmd stdinM -> do
+  M.AssignRun v cmd stdinM -> do
     cmd' <- evalParts cmd
     stdinM' <- case stdinM of
       Nothing -> pure Nothing
@@ -201,26 +201,26 @@ interpretInstruction inst = case inst of
     modifyPC (+ 1)
     setExitCode ec
 
-  Assign v parts -> do
+  M.Assign v parts -> do
     parts' <- evalParts parts
     setVar v parts'
     modifyPC (+ 1)
     setExitCode 0
 
-  JumpIfRetZero p -> do
-    ec <- statePrevExitCode <$> getState
+  M.JumpIfRetZero p -> do
+    ec <- M.statePrevExitCode <$> getState
     if (ec == 0)
       then setPC p
       else modifyPC (+ 1)
     setExitCode 0
 
-  Jump p -> do
+  M.Jump p -> do
     setPC p
     setExitCode 0
 
-  Exit -> do
-    paths <- contextPaths <$> getContext
+  M.Exit -> do
+    paths <- M.contextPaths <$> getContext
     liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ do
-      Dir.removeFile $ pathASM paths
-      Dir.removeFile $ pathState paths
+      Dir.removeFile $ M.pathASM paths
+      Dir.removeFile $ M.pathState paths
     liftIO Exit.exitSuccess
