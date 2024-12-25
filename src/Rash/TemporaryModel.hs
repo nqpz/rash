@@ -37,5 +37,3 @@ data TempInstruction = TempRead { tempAssignID :: TempID
 
 data TempAssembly = TempAssembly [TempInstruction]
                   deriving (Show)
-
-
