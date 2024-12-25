@@ -1,4 +1,4 @@
-module Rash.EndModel
+module Rash.InternalRepresentation
   ( RashPaths(..)
   , ID
   , Part(..)

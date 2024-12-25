@@ -30,7 +30,7 @@ executable rash
         Rash.SequenceUtilities
         Rash.ParsedRepresentation
         Rash.Parser
-        Rash.EndModel
+        Rash.InternalRepresentation
         Rash.Interpreter
         Rash.Runner
     default-language: GHC2021
