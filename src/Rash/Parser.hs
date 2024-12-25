@@ -10,7 +10,7 @@ import qualified Text.Parsec.String as P
 
 import qualified Data.Maybe as May
 
-import qualified Rash.TemporaryModel as MT
+import qualified Rash.ParsedRepresentation as MT
 
 
 parseFile :: FilePath -> IO (Either P.ParseError [MT.Instruction])

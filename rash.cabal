@@ -28,7 +28,7 @@ executable rash
     hs-source-dirs:   src
     other-modules:
         Rash.SequenceUtilities
-        Rash.TemporaryModel
+        Rash.ParsedRepresentation
         Rash.Parser
         Rash.EndModel
         Rash.Interpreter

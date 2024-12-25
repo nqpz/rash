@@ -1,4 +1,4 @@
-module Rash.TemporaryModel
+module Rash.ParsedRepresentation
   ( ID
   , Label
   , Part(..)
