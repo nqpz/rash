@@ -72,7 +72,7 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         insts'' = map instConv insts'
 
         instConv :: RP.Instruction -> RI.Instruction
-        instConv ti = case ti of
+        instConv = \case
           RP.Read tid -> RI.Read (varMap M.! tid)
           RP.Run cmd stdinM -> RI.Run (partsConv cmd) (partsConv <$> stdinM)
           RP.AssignRun v cmd stdinM ->
@@ -87,7 +87,7 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         partsConv = listToSequence . map partConv
 
         partConv :: RP.Part -> RI.Part
-        partConv p = case p of
+        partConv = \case
           RP.TextPart s -> RI.TextPart $ T.pack s
           RP.IDPart b v -> RI.IDPart b (varMap M.! v)
 
@@ -107,7 +107,7 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         varMap = M.fromList $ zip (L.nub (L.concatMap instVars insts')) [0..]
 
         instVars :: RP.Instruction -> [RP.ID]
-        instVars inst = case inst of
+        instVars = \case
           RP.Read v -> [v]
           RP.Run ps Nothing -> partsVars ps
           RP.Run ps0 (Just ps1) -> partsVars (ps0 ++ ps1)
@@ -120,7 +120,7 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         partsVars = May.catMaybes . map partVar
 
         partVar :: RP.Part -> Maybe RP.ID
-        partVar p = case p of
+        partVar = \case
           RP.TextPart _ -> Nothing
           RP.IDPart _ v -> Just v
 

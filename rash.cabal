@@ -31,3 +31,5 @@ executable rash
         Rash.Interpreter
         Rash.Runner
     default-language: GHC2021
+    default-extensions:
+      LambdaCase

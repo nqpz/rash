@@ -154,14 +154,14 @@ extractParts :: Sequence RI.Part -> Sequence (InterpM T.Text)
 extractParts = IA.amap extractPart
 
 extractPart :: RI.Part -> InterpM T.Text
-extractPart p = case p of
+extractPart = \case
   RI.TextPart t -> pure t
   RI.IDPart b v -> do r <- getVar v
                       pure $ if b then shEsc r else r
           where shEsc = TE.decodeUtf8 . TSE.bytes . TSE.sh . TE.encodeUtf8
 
 interpretInstruction :: RI.Instruction -> InterpM ()
-interpretInstruction inst = case inst of
+interpretInstruction = \case
   RI.Read var -> do
     s <- getState
     c <- getContext
