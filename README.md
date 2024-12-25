@@ -107,13 +107,14 @@ initial arguments passed to your program.
 
 The pipeline of `rash` loading a new file looks like this:
 
-  0. Parse the file into a list of intermediate `TempInstruction`
-     instructions.
+  0. Parse the file into a list of intermediate
+     `Rash.Representation.Parse.Instruction` instructions.
 
-  1. Convert the `TempAssembly` into an optimized `Assembly` type, where
-     jumps to labels are converted to jumps to absolute instructions,
-     and variable names are converted to variable indexes.  Also turn
-     all strings into `Data.Text.Text` values.
+  1. Convert the `Rash.Representation.Parse.Assembly` into an optimized
+     `Rash.Representation.Internal.Assembly` type, where jumps to labels
+     are converted to jumps to absolute instructions, and variable names
+     are converted to variable indexes.  Also turn all strings into
+     `Data.Text.Text` values.
 
   2. Interpret.
 
