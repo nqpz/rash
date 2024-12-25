@@ -25,5 +25,5 @@ executable rash
       , filepath
       , directory
       , shell-escape
-    hs-source-dirs:   app
+    hs-source-dirs:   src
     default-language: GHC2021
