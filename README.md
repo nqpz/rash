@@ -28,6 +28,91 @@ Alternatively, you can install [Nix](https://nixos.org/) and then either
     binary into `result/bin` that you can then run directly or manually
     copy to `~/.local/bin` or another directory of your choosing.
 
+## User documentation
+
+`rash` is a state-saving pseudo-shell tailored for concieggs.
+
+When its `read` instruction is encountered, the program exits.  When the program
+is run again, it restarts at that `read` instruction and uses the command-line
+arguments as the read input instead of using standard in.  This continues until
+there are no more instructions to run.
+
+`rash` is an assembly-like language.  Each line is an instruction.  It has the
+following types of instructions:
+
+  - `# Some text.`
+    - A comment.
+    - `Instruction` constructor: None, optimized away
+  - `a_var=some text`
+    - Assignment of text 'some text' to variable `a_var`.
+    - `Instruction` constructor: `Assign`
+  - `>command arg0 arg1`
+    - Run `command arg0 arg1` in a shell, wait for it to finish, and print its
+      output.
+    - `Instruction` constructor: `Run`
+  - `read x`
+    - Exit.  When restarted, read the command line arguments into the variable
+      `x`.
+    - `Instruction` constructor: `Read`
+  - `:your_label`
+    - A label for jumping.
+    - `Instruction` constructor: None, optimized away
+  - `j your_label`
+    - Jump unconditionally to the `your_label` label.
+    - `Instruction` constructor: `Jump`
+  - `jz somewhere`
+    - Jump to the `somewhere` label if the previous command exited with return
+      code 0.  If no command has previously run, the return code is 0.
+    - `Instruction` constructor: `JumpIfRetZero`
+  - `exit`
+    - Remove all state and exit.  This also happens if the end of the program is
+      reached.
+    - `Instruction` constructor: `Exit`
+  - `tribbles=>ls stuff`
+    - Run `ls stuff` in a shell, wait for it to finish, and redirect its standard
+      out into the `tribbles` variable.
+    - `Instruction` constructor: `AssignRun`
+  - `<some text>grep -vi bar`
+    - Run `grep -vi bar` with "some text" redirected into standard in, and print
+      its output.  This can be used to simulate pipes.
+    - `Instruction` constructor: `Run`
+  - `foo=<some text>grep -vi bar`
+    - Run `grep -vi bar` with "some text" redirected into standard in, and
+      redirect its standard out into the `foo` variable.
+    - `Instruction` constructor: `AssignRun`
+
+To use a variable in text fields, write `${variable}`.  This can be used in
+commands, assignment values, and command inputs, and it can be mixed with just
+text.  For example, this:
+
+```
+read url_base
+>grep http://${url_base}/robots.txt crawls
+```
+
+first reads command line arguments into the `url_base` variable, and then runs
+`grep` with, among other text, the `url_base` value as the first argument.
+
+Whitespace and lack thereof is significant, because why not?
+
+For now, no special characters can be escaped.
+
+You can use the special variable `${initial_arguments}` to get the initial
+arguments passed to your program.
+
+## Developer documentation
+
+The pipeline of `rash` loading a new file looks like this:
+
+  0. Parse the file into a list of intermediate `TempInstruction` instructions.
+
+  1. Convert the `TempAssembly` into an optimized `Assembly` type, where jumps
+     to labels are converted to jumps to absolute instructions, and variable
+     names are converted to variable indexes.  Also turn all strings into
+     `Data.Text.Text` values.
+
+  2. Interpret.
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it
