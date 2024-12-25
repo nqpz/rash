@@ -26,4 +26,11 @@ executable rash
       , directory
       , shell-escape
     hs-source-dirs:   src
+    other-modules:
+        Rash.Utilities
+        Rash.TemporaryModel
+        Rash.Parser
+        Rash.EndModel
+        Rash.Interpreter
+        Rash.Runner
     default-language: GHC2021
