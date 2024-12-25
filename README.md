@@ -45,7 +45,7 @@ has the following types of instructions:
     - A comment.
     - `Instruction` constructor: None, optimized away
   - `a_var=some text`
-    - Assignment of text 'some text' to variable `a_var`.
+    - Assignment of text "some text" to variable `a_var`.
     - `Instruction` constructor: `Assign`
   - `>command arg0 arg1`
     - Run `command arg0 arg1` in a shell, wait for it to finish, and
