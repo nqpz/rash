@@ -12,17 +12,21 @@ yet.**
 For examples programs, please see the results of this search for now:
 https://github.com/search?q=repo%3Aathas%2FEggsML+%22%23%21%2Fusr%2Fbin%2Fenv+rash%22&type=code
 
-## Building
+## Building and installing
 
-Run `cabal build` to build.  This requires the `cabal` tool to be
-present on your system.  Please see
+Run `cabal install` to build the `rash` executable and place it in
+`~/.local/bin`.  This requires the `cabal` tool to be present on your
+system.  Please see
 https://cabal.readthedocs.io/en/latest/getting-started.html for how to
-get this.
+install this.
 
-Alternatively, if you have [Nix](https://nixos.org/), you can run
-`nix-shell` to get into a shell with the required development
-dependencies, or `nix-build` to build the program, which will put a
-binary into `result/bin`.
+Alternatively, you can install [Nix](https://nixos.org/) and then either
+
+  - run `nix-shell` to get into a sub-shell with the required development
+    dependencies present, and then run `cabal install` there, or
+  - run `nix-build` to build the program straight away, which will put a
+    binary into `result/bin` that you can then run directly or manually
+    copy to `~/.local/bin` or another directory of your choosing.
 
 ## License
 
