@@ -30,7 +30,8 @@ Alternatively, you can install [Nix](https://nixos.org/) and then either
 
 ## User documentation
 
-`rash` is a state-saving pseudo-shell tailored for concieggs.
+`rash` is a state-saving pseudo-shell tailored for IRC bots, but
+hopefully also applicable in other cases.
 
 When its `read` instruction is encountered, the program exits.  When the program
 is run again, it restarts at that `read` instruction and uses the command-line
