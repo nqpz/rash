@@ -21,9 +21,6 @@ import Rash.Interpreter (interpret, emptyState, thawState)
 import Rash.Parser (parseFile)
 
 
-xor :: Bool -> Bool -> Bool
-xor x y = x /= y
-
 runFile :: FilePath -> String -> IO ()
 runFile fname readArgs = do
   paths <- rashPaths fname
@@ -32,7 +29,7 @@ runFile fname readArgs = do
   -- The following code is fragile.
   asmExists <- Dir.doesFileExist $ pathASM paths
   stateExists <- Dir.doesFileExist $ pathState paths
-  when (asmExists `xor` stateExists) $ do
+  when (asmExists /= stateExists) $ do
     when asmExists $ Dir.removeFile $ pathASM paths
     when stateExists $ Dir.removeFile $ pathState paths
     Exit.exitFailure
