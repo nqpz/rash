@@ -47,9 +47,9 @@ has the following types of instructions:
   - `a_var=some text`
     - Assignment of text "some text" to variable `a_var`.
     - `Instruction` constructor: `Assign`
-  - `>command arg0 arg1`
-    - Run `command arg0 arg1` in a shell, wait for it to finish, and
-      print its output.
+  - `>command arg0 arg1 ... argN`
+    - Run `command arg0 arg1 ... argN` in a shell, wait for it to
+      finish, and print its output.
     - `Instruction` constructor: `Run`
   - `read x`
     - Exit.  When restarted, read the command line arguments into the
