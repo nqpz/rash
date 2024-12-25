@@ -33,10 +33,9 @@ runFile fname readArgs = do
     when asmExists $ Dir.removeFile $ RI.pathASM paths
     when stateExists $ Dir.removeFile $ RI.pathState paths
     Exit.exitFailure
-  let exists = asmExists -- any of the two will do
 
   (asm, state) <-
-    if exists
+    if asmExists
     then do
       a <- (read <$> (readFile $ RI.pathASM paths))
       i <- (read <$> (readFile $ RI.pathState paths))
