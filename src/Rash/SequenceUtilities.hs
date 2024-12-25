@@ -1,4 +1,4 @@
-module Rash.Utilities
+module Rash.SequenceUtilities
   ( Sequence
   , SequenceIO
   , listToSequence

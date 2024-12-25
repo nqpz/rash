@@ -21,7 +21,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.List as L
 
-import Rash.Utilities (Sequence, sequenceLength, sequenceToList)
+import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
 import Rash.EndModel
 
 

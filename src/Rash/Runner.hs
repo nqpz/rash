@@ -14,7 +14,7 @@ import qualified Data.List as L
 import qualified Data.Map as M
 import qualified Data.Maybe as May
 
-import Rash.Utilities (Sequence, listToSequence)
+import Rash.SequenceUtilities (Sequence, listToSequence)
 import Rash.EndModel
 import Rash.TemporaryModel
 import Rash.Interpreter (interpret, emptyState, thawState)

@@ -27,7 +27,7 @@ executable rash
       , shell-escape
     hs-source-dirs:   src
     other-modules:
-        Rash.Utilities
+        Rash.SequenceUtilities
         Rash.TemporaryModel
         Rash.Parser
         Rash.EndModel

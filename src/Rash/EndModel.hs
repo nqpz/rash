@@ -11,7 +11,7 @@ module Rash.EndModel
 
 import qualified Data.Text as T
 
-import Rash.Utilities (Sequence, SequenceIO)
+import Rash.SequenceUtilities (Sequence, SequenceIO)
 
 
 data RashPaths = RashPaths { pathOrig :: FilePath
