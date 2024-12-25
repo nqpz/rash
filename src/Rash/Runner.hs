@@ -14,11 +14,15 @@ import qualified Data.List as L
 import qualified Data.Map as M
 import qualified Data.Maybe as May
 
-import Rash.Utilities (xor, Sequence, listToSequence)
+import Rash.Utilities (Sequence, listToSequence)
 import Rash.EndModel
 import Rash.TemporaryModel
 import Rash.Interpreter (interpret, emptyState, thawState)
 import Rash.Parser (parseFile)
+
+
+xor :: Bool -> Bool -> Bool
+xor x y = x /= y
 
 runFile :: FilePath -> String -> IO ()
 runFile fname readArgs = do

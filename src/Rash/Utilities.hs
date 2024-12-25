@@ -1,6 +1,5 @@
 module Rash.Utilities
-  ( xor
-  , Sequence
+  ( Sequence
   , SequenceIO
   , listToSequence
   , sequenceToList
@@ -10,9 +9,6 @@ module Rash.Utilities
 import qualified Data.Array.IArray as IA
 import qualified Data.Array.IO as IOA
 
-
-xor :: Bool -> Bool -> Bool
-xor x y = x /= y
 
 type Sequence a = IA.Array Int a
 type SequenceIO a = IOA.IOArray Int a
