@@ -1,6 +1,5 @@
 module Rash.Utilities
-  ( RashPaths(..)
-  , xor
+  ( xor
   , runProcess
   , Sequence
   , SequenceIO
@@ -14,13 +13,6 @@ import qualified System.Process as Proc
 import qualified Data.Array.IArray as IA
 import qualified Data.Array.IO as IOA
 
-
-data RashPaths = RashPaths { pathOrig :: FilePath
-                           , pathDir :: FilePath
-                           , pathASM :: FilePath
-                           , pathState :: FilePath
-                           }
-               deriving (Show)
 
 xor :: Bool -> Bool -> Bool
 xor x y = x /= y

@@ -1,5 +1,6 @@
 module Rash.EndModel
-  ( ID
+  ( RashPaths(..)
+  , ID
   , Part(..)
   , Instruction(..)
   , Assembly(..)
@@ -10,8 +11,15 @@ module Rash.EndModel
 
 import qualified Data.Text as T
 
-import Rash.Utilities (Sequence, SequenceIO, RashPaths)
+import Rash.Utilities (Sequence, SequenceIO)
 
+
+data RashPaths = RashPaths { pathOrig :: FilePath
+                           , pathDir :: FilePath
+                           , pathASM :: FilePath
+                           , pathState :: FilePath
+                           }
+               deriving (Show)
 
 type ID = Int
 
