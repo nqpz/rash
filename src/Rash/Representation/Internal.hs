@@ -1,4 +1,4 @@
-module Rash.InternalRepresentation
+module Rash.Representation.Internal
   ( RashPaths(..)
   , ID
   , Part(..)

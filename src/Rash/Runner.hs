@@ -15,8 +15,8 @@ import qualified Data.Map as M
 import qualified Data.Maybe as May
 
 import Rash.SequenceUtilities (Sequence, listToSequence)
-import qualified Rash.InternalRepresentation as RI
-import qualified Rash.ParsedRepresentation as RP
+import qualified Rash.Representation.Parse as RP
+import qualified Rash.Representation.Internal as RI
 import Rash.Interpreter (interpret, emptyState, thawState)
 import Rash.Parser (parseFile)
 

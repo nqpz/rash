@@ -22,7 +22,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.List as L
 
 import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
-import qualified Rash.InternalRepresentation as RI
+import qualified Rash.Representation.Internal as RI
 
 
 -- SETTTINGS

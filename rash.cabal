@@ -28,9 +28,9 @@ executable rash
     hs-source-dirs:   src
     other-modules:
         Rash.SequenceUtilities
-        Rash.ParsedRepresentation
+        Rash.Representation.Parse
+        Rash.Representation.Internal
         Rash.Parser
-        Rash.InternalRepresentation
         Rash.Interpreter
         Rash.Runner
     default-language: GHC2021

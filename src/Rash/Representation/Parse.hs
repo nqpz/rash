@@ -1,4 +1,4 @@
-module Rash.ParsedRepresentation
+module Rash.Representation.Parse
   ( ID
   , Label
   , Part(..)
