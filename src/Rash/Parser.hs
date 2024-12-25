@@ -13,7 +13,7 @@ import qualified Data.Maybe as May
 import qualified Rash.TemporaryModel as MT
 
 
-parseFile :: FilePath -> IO (Either P.ParseError [MT.TempInstruction])
+parseFile :: FilePath -> IO (Either P.ParseError [MT.Instruction])
 parseFile = P.parseFromFile instructionsP
 
 symbol :: String -> P.Parser ()
@@ -28,20 +28,20 @@ lineEnd = void $ P.satisfy isLineEnd
 notLineEnd :: P.Parser Char
 notLineEnd = P.satisfy (not . isLineEnd)
 
-stringParts :: String -> [MT.TempPart]
+stringParts :: String -> [MT.Part]
 stringParts s = case P.parse stringPartsP "input" s of
   Left _ -> [] -- no errors anyway
   Right ps -> ps
 
-stringPartsP :: P.Parser [MT.TempPart]
+stringPartsP :: P.Parser [MT.Part]
 stringPartsP = P.many stringPartP
 
-stringPartP :: P.Parser MT.TempPart
-stringPartP = (MT.TempIDPart False <$> idPartP "$")
-              P.<|> (MT.TempIDPart True <$> idPartP "$'")
-              P.<|> (MT.TempTextPart <$> textPartP)
+stringPartP :: P.Parser MT.Part
+stringPartP = (MT.IDPart False <$> idPartP "$")
+              P.<|> (MT.IDPart True <$> idPartP "$'")
+              P.<|> (MT.TextPart <$> textPartP)
 
-idPartP :: String -> P.Parser MT.TempID
+idPartP :: String -> P.Parser MT.ID
 idPartP p = do
   symbol (p ++ "{")
   var <- P.many1 (P.satisfy (/= '}'))
@@ -51,16 +51,16 @@ idPartP p = do
 textPartP :: P.Parser String
 textPartP = P.many1 (P.satisfy (/= '$'))
 
-instructionsP :: P.Parser [MT.TempInstruction]
+instructionsP :: P.Parser [MT.Instruction]
 instructionsP =
   May.catMaybes <$>
   (P.sepEndBy ((commentP >> pure Nothing)
-               P.<|> ((Just . MT.TempLabel) <$> labelP)
-               P.<|> (exitP >> pure (Just MT.TempExit))
-               P.<|> ((Just . MT.TempRead) <$> readP)
-               P.<|> ((Just . MT.TempJump) <$> jumpP)
-               P.<|> ((Just . MT.TempJumpIfRetZero) <$> jumpZeroP)
-               P.<|> ((Just . uncurry MT.TempRun) <$> runP)
+               P.<|> ((Just . MT.Label) <$> labelP)
+               P.<|> (exitP >> pure (Just MT.Exit))
+               P.<|> ((Just . MT.Read) <$> readP)
+               P.<|> ((Just . MT.Jump) <$> jumpP)
+               P.<|> ((Just . MT.JumpIfRetZero) <$> jumpZeroP)
+               P.<|> ((Just . uncurry MT.Run) <$> runP)
                P.<|> (Just <$> assignGeneralP)
                P.<?> "instruction")
    (many lineEnd))
@@ -70,7 +70,7 @@ commentP = do
   symbol "#"
   void $ P.many notLineEnd
 
-labelP :: P.Parser MT.TempLabel
+labelP :: P.Parser MT.Label
 labelP = do
   symbol ":"
   P.many1 notLineEnd
@@ -80,40 +80,40 @@ exitP = P.try $ do
   symbol "exit"
   lineEnd
 
-readP :: P.Parser MT.TempID
+readP :: P.Parser MT.ID
 readP = do
   symbol "read "
   P.many1 notLineEnd
 
-jumpP :: P.Parser MT.TempLabel
+jumpP :: P.Parser MT.Label
 jumpP = do
   symbol "j "
   P.many1 notLineEnd
 
-jumpZeroP :: P.Parser MT.TempLabel
+jumpZeroP :: P.Parser MT.Label
 jumpZeroP = do
   symbol "jz "
   P.many1 notLineEnd
 
-runP :: P.Parser ([MT.TempPart], Maybe [MT.TempPart])
+runP :: P.Parser ([MT.Part], Maybe [MT.Part])
 runP = ((, Nothing) <$> runNoStdinP)
        <|> ((\(t, u) -> (t, Just u)) <$> runStdinP)
 
-runNoStdinP :: P.Parser [MT.TempPart]
+runNoStdinP :: P.Parser [MT.Part]
 runNoStdinP = do
   symbol ">"
   stringParts <$> P.many1 notLineEnd
 
-runStdinP :: P.Parser ([MT.TempPart], [MT.TempPart])
+runStdinP :: P.Parser ([MT.Part], [MT.Part])
 runStdinP = do
   symbol "<"
   inp <- stringParts <$> P.many1 (P.satisfy (/= '>'))
   cmd <- runNoStdinP
   pure (cmd, inp)
 
-assignGeneralP :: P.Parser MT.TempInstruction
+assignGeneralP :: P.Parser MT.Instruction
 assignGeneralP = do
   var <- P.many1 (P.satisfy (/= '='))
   symbol "="
-  ((uncurry (MT.TempAssignRun var) <$> runP)
-   <|> (MT.TempAssign var <$> (stringParts <$> P.many1 notLineEnd)))
+  ((uncurry (MT.AssignRun var) <$> runP)
+   <|> (MT.Assign var <$> (stringParts <$> P.many1 notLineEnd)))

@@ -49,8 +49,8 @@ runFile fname readArgs = do
           print errorMessage
           Exit.exitFailure
         Right insts -> do
-          let insts' = MT.TempAssign "initial_arguments" [MT.TempTextPart readArgs] : insts
-          let (a, nVars) = asmTempToAsm $ MT.TempAssembly insts'
+          let insts' = MT.Assign "initial_arguments" [MT.TextPart readArgs] : insts
+          let (a, nVars) = asmTempToAsm $ MT.Assembly insts'
           s <- emptyState nVars
           pure (a, s)
 
@@ -60,70 +60,70 @@ runFile fname readArgs = do
                           }
   interpret context state
 
-isTempLabel :: MT.TempInstruction -> Bool
-isTempLabel (MT.TempLabel _) = True
+isTempLabel :: MT.Instruction -> Bool
+isTempLabel (MT.Label _) = True
 isTempLabel _ = False
 
-asmTempToAsm :: MT.TempAssembly -> (M.Assembly, Int)
-asmTempToAsm (MT.TempAssembly insts) = (M.Assembly $ listToSequence insts'', nVars)
-  where insts' :: [MT.TempInstruction]
+asmTempToAsm :: MT.Assembly -> (M.Assembly, Int)
+asmTempToAsm (MT.Assembly insts) = (M.Assembly $ listToSequence insts'', nVars)
+  where insts' :: [MT.Instruction]
         insts' = filter (not . isTempLabel) insts
 
         insts'' :: [M.Instruction]
         insts'' = map instConv insts'
 
-        instConv :: MT.TempInstruction -> M.Instruction
+        instConv :: MT.Instruction -> M.Instruction
         instConv ti = case ti of
-          MT.TempRead tid -> M.Read (varMap M.! tid)
-          MT.TempRun cmd stdinM -> M.Run (partsConv cmd) (partsConv <$> stdinM)
-          MT.TempAssignRun v cmd stdinM ->
+          MT.Read tid -> M.Read (varMap M.! tid)
+          MT.Run cmd stdinM -> M.Run (partsConv cmd) (partsConv <$> stdinM)
+          MT.AssignRun v cmd stdinM ->
             M.AssignRun (varMap M.! v) (partsConv cmd) (partsConv <$> stdinM)
-          MT.TempAssign v parts -> M.Assign (varMap M.! v) (partsConv parts)
-          MT.TempJumpIfRetZero label -> M.JumpIfRetZero (labelPoss M.! label)
-          MT.TempJump label -> M.Jump (labelPoss M.! label)
-          MT.TempExit -> M.Exit
-          MT.TempLabel _ -> error "FATAL: all labels should have been removed"
+          MT.Assign v parts -> M.Assign (varMap M.! v) (partsConv parts)
+          MT.JumpIfRetZero label -> M.JumpIfRetZero (labelPoss M.! label)
+          MT.Jump label -> M.Jump (labelPoss M.! label)
+          MT.Exit -> M.Exit
+          MT.Label _ -> error "FATAL: all labels should have been removed"
 
-        partsConv :: [MT.TempPart] -> Sequence M.Part
+        partsConv :: [MT.Part] -> Sequence M.Part
         partsConv = listToSequence . map partConv
 
-        partConv :: MT.TempPart -> M.Part
+        partConv :: MT.Part -> M.Part
         partConv p = case p of
-          MT.TempTextPart s -> M.TextPart $ T.pack s
-          MT.TempIDPart b v -> M.IDPart b (varMap M.! v)
+          MT.TextPart s -> M.TextPart $ T.pack s
+          MT.IDPart b v -> M.IDPart b (varMap M.! v)
 
-        labelPoss :: M.Map MT.TempLabel Int
+        labelPoss :: M.Map MT.Label Int
         labelPoss = M.fromList $ buildPs insts 0
 
-        buildPs :: [MT.TempInstruction] -> Int -> [(MT.TempLabel, Int)]
+        buildPs :: [MT.Instruction] -> Int -> [(MT.Label, Int)]
         buildPs [] _ = []
         buildPs (i : is) n = case i of
-          MT.TempLabel label -> (label, n) : buildPs is n
+          MT.Label label -> (label, n) : buildPs is n
           _ -> buildPs is (n + 1)
 
         nVars :: Int
         nVars = M.size varMap
 
-        varMap :: M.Map MT.TempID M.ID
+        varMap :: M.Map MT.ID M.ID
         varMap = M.fromList $ zip (L.nub (L.concatMap instVars insts')) [0..]
 
-        instVars :: MT.TempInstruction -> [MT.TempID]
+        instVars :: MT.Instruction -> [MT.ID]
         instVars inst = case inst of
-          MT.TempRead v -> [v]
-          MT.TempRun ps Nothing -> partsVars ps
-          MT.TempRun ps0 (Just ps1) -> partsVars (ps0 ++ ps1)
-          MT.TempAssignRun v ps Nothing -> [v] ++ partsVars ps
-          MT.TempAssignRun v ps0 (Just ps1) -> [v] ++ partsVars (ps0 ++ ps1)
-          MT.TempAssign v ps -> [v] ++ partsVars ps
+          MT.Read v -> [v]
+          MT.Run ps Nothing -> partsVars ps
+          MT.Run ps0 (Just ps1) -> partsVars (ps0 ++ ps1)
+          MT.AssignRun v ps Nothing -> [v] ++ partsVars ps
+          MT.AssignRun v ps0 (Just ps1) -> [v] ++ partsVars (ps0 ++ ps1)
+          MT.Assign v ps -> [v] ++ partsVars ps
           _ -> []
 
-        partsVars :: [MT.TempPart] -> [MT.TempID]
+        partsVars :: [MT.Part] -> [MT.ID]
         partsVars = May.catMaybes . map partVar
 
-        partVar :: MT.TempPart -> Maybe MT.TempID
+        partVar :: MT.Part -> Maybe MT.ID
         partVar p = case p of
-          MT.TempTextPart _ -> Nothing
-          MT.TempIDPart _ v -> Just v
+          MT.TextPart _ -> Nothing
+          MT.IDPart _ v -> Just v
 
 rashPaths :: FilePath -> IO M.RashPaths
 rashPaths fname = do

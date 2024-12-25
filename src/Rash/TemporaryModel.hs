@@ -1,39 +1,39 @@
 module Rash.TemporaryModel
-  ( TempID
-  , TempLabel
-  , TempPart(..)
-  , TempInstruction(..)
-  , TempAssembly(..)
+  ( ID
+  , Label
+  , Part(..)
+  , Instruction(..)
+  , Assembly(..)
   ) where
 
-type TempID = String
+type ID = String
 
-type TempLabel = String
+type Label = String
 
-data TempPart = TempTextPart String
-              | TempIDPart Bool TempID
-              deriving (Show)
+data Part = TextPart String
+          | IDPart Bool ID
+          deriving (Show)
 
-data TempInstruction = TempRead { tempAssignID :: TempID
-                                }
-                     | TempRun { tempCommandParts :: [TempPart]
-                               , tempAssignStdin :: Maybe [TempPart]
-                               }
-                     | TempAssignRun { tempAssignID :: TempID
-                                     , tempCommandParts :: [TempPart]
-                                     , tempAssignStdin :: Maybe [TempPart]
-                                     }
-                     | TempAssign { tempAssignID :: TempID
-                                  , tempContentParts :: [TempPart]
-                                  }
-                     | TempJumpIfRetZero { tempJumpPos :: TempLabel
-                                         }
-                     | TempJump { tempJumpPos :: TempLabel
-                                }
-                     | TempExit
-                     | TempLabel { tempLabel :: TempLabel
+data Instruction = Read { tempAssignID :: ID
+                        }
+                 | Run { tempCommandParts :: [Part]
+                       , tempAssignStdin :: Maybe [Part]
+                       }
+                 | AssignRun { tempAssignID :: ID
+                             , tempCommandParts :: [Part]
+                             , tempAssignStdin :: Maybe [Part]
+                             }
+                 | Assign { tempAssignID :: ID
+                          , tempContentParts :: [Part]
+                          }
+                 | JumpIfRetZero { tempJumpPos :: Label
                                  }
+                 | Jump { tempJumpPos :: Label
+                        }
+                 | Exit
+                 | Label { tempLabel :: Label
+                         }
                  deriving (Show)
 
-data TempAssembly = TempAssembly [TempInstruction]
-                  deriving (Show)
+data Assembly = Assembly [Instruction]
+              deriving (Show)
