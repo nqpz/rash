@@ -11,6 +11,6 @@ main = do
   args <- Env.getArgs
   case args of
     (fname : readArgs) -> do
-      stateDir <- Env.getEnv "CONCIEGGS_DB_DIR"
+      stateDir <- Env.getEnv "RASH_STATE_DIR"
       runFile stateDir fname (L.intercalate " " readArgs)
     [] -> Exit.exitFailure
