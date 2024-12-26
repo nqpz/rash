@@ -4,7 +4,6 @@ module Rash.Runner
 
 import Control.Monad
 
-import qualified System.Environment as Env
 import qualified System.Directory as Dir
 import qualified System.FilePath as Path
 import qualified System.Exit as Exit
@@ -21,9 +20,9 @@ import Rash.Interpreter (interpret, emptyState, thawState)
 import Rash.Parser (parseFile)
 
 
-runFile :: FilePath -> String -> IO ()
-runFile fname readArgs = do
-  paths <- rashPaths fname
+runFile :: FilePath -> FilePath -> String -> IO ()
+runFile stateDir fname readArgs = do
+  paths <- rashPaths stateDir fname
   Dir.createDirectoryIfMissing True $ RI.pathDir paths
 
   -- The following code is fragile.
@@ -141,11 +140,10 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
           RP.TextPart _ -> Nothing
           RP.IDPart _ v -> Just v
 
-rashPaths :: FilePath -> IO RI.RashPaths
-rashPaths fname = do
+rashPaths :: FilePath -> FilePath -> IO RI.RashPaths
+rashPaths stateDir fname = do
   fnameCanon <- Dir.canonicalizePath fname
-  dbDir <- Env.getEnv "CONCIEGGS_DB_DIR"
-  let fnameSave = Path.combine dbDir "rash" ++ fnameCanon
+  let fnameSave = Path.combine stateDir "rash" ++ fnameCanon
       dirSave = fst $ Path.splitFileName fnameSave
       asmSave = fnameSave ++ ".asm"
       stateSave = fnameSave ++ ".state"

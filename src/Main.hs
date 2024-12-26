@@ -10,5 +10,7 @@ main :: IO ()
 main = do
   args <- Env.getArgs
   case args of
-    (fname : readArgs) -> runFile fname (L.intercalate " " readArgs)
+    (fname : readArgs) -> do
+      stateDir <- Env.getEnv "CONCIEGGS_DB_DIR"
+      runFile stateDir fname (L.intercalate " " readArgs)
     [] -> Exit.exitFailure
