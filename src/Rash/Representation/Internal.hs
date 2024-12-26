@@ -15,8 +15,7 @@ import qualified Data.Text as T
 import Rash.SequenceUtilities (Sequence, SequenceIO)
 
 
-data RashPaths = RashPaths { pathOrig :: FilePath
-                           , pathDir :: FilePath
+data RashPaths = RashPaths { pathDir :: FilePath
                            , pathASM :: FilePath
                            , pathState :: FilePath
                            }

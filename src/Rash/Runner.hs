@@ -149,8 +149,7 @@ rashPaths fname = do
       dirSave = fst $ Path.splitFileName fnameSave
       asmSave = fnameSave ++ ".asm"
       stateSave = fnameSave ++ ".state"
-  pure RI.RashPaths { RI.pathOrig = fname
-                    , RI.pathDir = dirSave
+  pure RI.RashPaths { RI.pathDir = dirSave
                     , RI.pathASM = asmSave
                     , RI.pathState = stateSave
                     }
