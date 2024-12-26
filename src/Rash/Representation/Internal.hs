@@ -2,6 +2,7 @@ module Rash.Representation.Internal
   ( RashPaths(..)
   , ID
   , Part(..)
+  , Command(..)
   , Instruction(..)
   , Assembly(..)
   , Context(..)
@@ -27,18 +28,21 @@ data Part = TextPart T.Text
           | IDPart Bool ID
           deriving (Read, Show)
 
+data Command = Command { commandParts :: Sequence Part
+                       , assignStdin :: Maybe (Sequence Part)
+                       }
+         deriving (Read, Show)
+
 data Instruction = Read { assignID :: ID
                         }
                    -- ^ Read a line into a register.
 
-                 | Run { commandParts :: Sequence Part
-                       , assignStdin :: Maybe (Sequence Part)
+                 | Run { command :: Command
                        }
                    -- ^ Run a command with arguments.
 
                  | AssignRun { assignID :: ID
-                             , commandParts :: Sequence Part
-                             , assignStdin :: Maybe (Sequence Part)
+                             , command :: Command
                              }
                    -- ^ Run a command with arguments, and redirect its standard
                    -- out to a register.  Optionally, supply standard in.

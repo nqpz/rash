@@ -38,7 +38,7 @@ instructions =
                <|> ((Just . RP.Read) <$> readInstruction)
                <|> ((Just . RP.Jump) <$> jump)
                <|> ((Just . RP.JumpIfRetZero) <$> jumpZero)
-               <|> ((Just . uncurry RP.Run) <$> run)
+               <|> (Just <$> runInstruction)
                <|> (Just <$> assignInstruction)
                <?> "instruction")
    (many lineEnd))
@@ -92,20 +92,23 @@ jumpZero = do
   symbol "jz "
   many1 notLineEnd
 
-run :: Parser ([RP.Part], Maybe [RP.Part])
-run = ((, Nothing) <$> runNoStdin)
-       <|> ((\(t, u) -> (t, Just u)) <$> runStdin)
-  where runNoStdin :: Parser [RP.Part]
-        runNoStdin = do
+runInstruction :: Parser RP.Instruction
+runInstruction = RP.Run <$> command
+
+command :: Parser RP.Command
+command = runNoStdin <|> runStdin
+  where cmd :: Parser [RP.Part]
+        cmd = do
           symbol ">"
           stringParts <$> many1 notLineEnd
 
-        runStdin :: Parser ([RP.Part], [RP.Part])
+        runNoStdin :: Parser RP.Command
+        runNoStdin = RP.Command <$> cmd <*> pure Nothing
+
+        runStdin :: Parser RP.Command
         runStdin = do
           symbol "<"
-          inp <- stringParts <$> many1 (satisfy (/= '>'))
-          cmd <- runNoStdin
-          pure (cmd, inp)
+          RP.Command <$> cmd <*> ((Just . stringParts) <$> many1 (satisfy (/= '>')))
 
 assignInstruction :: Parser RP.Instruction
 assignInstruction = do
@@ -113,7 +116,7 @@ assignInstruction = do
   symbol "="
   assignRun var <|> assign var
   where assignRun :: String -> Parser RP.Instruction
-        assignRun var = uncurry (RP.AssignRun var) <$> run
+        assignRun var = RP.AssignRun var <$> command
 
         assign :: String -> Parser RP.Instruction
         assign var = RP.Assign var <$> (stringParts <$> many1 notLineEnd)

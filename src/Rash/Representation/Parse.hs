@@ -2,6 +2,7 @@ module Rash.Representation.Parse
   ( ID
   , Label
   , Part(..)
+  , Command(..)
   , Instruction(..)
   , Assembly(..)
   ) where
@@ -14,14 +15,17 @@ data Part = TextPart String
           | IDPart Bool ID
           deriving (Show)
 
-data Instruction = Read { tempAssignID :: ID
-                        }
-                 | Run { tempCommandParts :: [Part]
+data Command = Command { tempCommandParts :: [Part]
                        , tempAssignStdin :: Maybe [Part]
                        }
+             deriving (Show)
+
+data Instruction = Read { tempAssignID :: ID
+                        }
+                 | Run { command :: Command
+                       }
                  | AssignRun { tempAssignID :: ID
-                             , tempCommandParts :: [Part]
-                             , tempAssignStdin :: Maybe [Part]
+                             , command :: Command
                              }
                  | Assign { tempAssignID :: ID
                           , tempContentParts :: [Part]

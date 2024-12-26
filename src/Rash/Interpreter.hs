@@ -160,6 +160,14 @@ extractPart = \case
                       pure $ if b then shEsc r else r
           where shEsc = TE.decodeUtf8 . TSE.bytes . TSE.sh . TE.encodeUtf8
 
+interpretCommand :: RI.Command -> InterpM (Int, String)
+interpretCommand (RI.Command cmd stdinM) = do
+  cmd' <- evalParts cmd
+  stdinM' <- case stdinM of
+    Nothing -> pure Nothing
+    Just stdin -> Just <$> evalParts stdin
+  liftIO $ runProcess (T.unpack cmd') (T.unpack <$> stdinM')
+
 interpretInstruction :: RI.Instruction -> InterpM ()
 interpretInstruction = \case
   RI.Read var -> do
@@ -181,22 +189,14 @@ interpretInstruction = \case
       liftIO $ writeFile (RI.pathState paths) (show iState)
       liftIO Exit.exitSuccess
 
-  RI.Run cmd stdinM -> do
-    cmd' <- evalParts cmd
-    stdinM' <- case stdinM of
-      Nothing -> pure Nothing
-      Just stdin -> Just <$> evalParts stdin
-    (ec, out) <- liftIO $ runProcess (T.unpack cmd') (T.unpack <$> stdinM')
+  RI.Run command -> do
+    (ec, out) <- interpretCommand command
     liftIO $ putStr out
     modifyPC (+ 1)
     setExitCode ec
 
-  RI.AssignRun v cmd stdinM -> do
-    cmd' <- evalParts cmd
-    stdinM' <- case stdinM of
-      Nothing -> pure Nothing
-      Just stdin -> Just <$> evalParts stdin
-    (ec, out) <- liftIO $ runProcess (T.unpack cmd') (T.unpack <$> stdinM')
+  RI.AssignRun v command -> do
+    (ec, out) <- interpretCommand command
     setVar v $ T.pack $ L.dropWhileEnd isSpace out
     modifyPC (+ 1)
     setExitCode ec

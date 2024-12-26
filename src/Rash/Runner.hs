@@ -71,12 +71,15 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         insts'' :: [RI.Instruction]
         insts'' = map instConv insts'
 
+        commandConv :: RP.Command -> RI.Command
+        commandConv (RP.Command cmd stdinM) = RI.Command (partsConv cmd) (partsConv <$> stdinM)
+
         instConv :: RP.Instruction -> RI.Instruction
         instConv = \case
           RP.Read tid -> RI.Read (varMap M.! tid)
-          RP.Run cmd stdinM -> RI.Run (partsConv cmd) (partsConv <$> stdinM)
-          RP.AssignRun v cmd stdinM ->
-            RI.AssignRun (varMap M.! v) (partsConv cmd) (partsConv <$> stdinM)
+          RP.Run command -> RI.Run (commandConv command)
+          RP.AssignRun v command ->
+            RI.AssignRun (varMap M.! v) (commandConv command)
           RP.Assign v parts -> RI.Assign (varMap M.! v) (partsConv parts)
           RP.JumpIfRetZero label -> RI.JumpIfRetZero (labelPoss M.! label)
           RP.Jump label -> RI.Jump (labelPoss M.! label)
@@ -109,10 +112,10 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
         instVars :: RP.Instruction -> [RP.ID]
         instVars = \case
           RP.Read v -> [v]
-          RP.Run ps Nothing -> partsVars ps
-          RP.Run ps0 (Just ps1) -> partsVars (ps0 ++ ps1)
-          RP.AssignRun v ps Nothing -> [v] ++ partsVars ps
-          RP.AssignRun v ps0 (Just ps1) -> [v] ++ partsVars (ps0 ++ ps1)
+          RP.Run (RP.Command ps Nothing) -> partsVars ps
+          RP.Run (RP.Command ps0 (Just ps1)) -> partsVars (ps0 ++ ps1)
+          RP.AssignRun v (RP.Command ps Nothing) -> [v] ++ partsVars ps
+          RP.AssignRun v (RP.Command ps0 (Just ps1)) -> [v] ++ partsVars (ps0 ++ ps1)
           RP.Assign v ps -> [v] ++ partsVars ps
           _ -> []
 
