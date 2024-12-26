@@ -2,10 +2,11 @@ module Rash.Parser
   ( parseFile
   ) where
 
-import Control.Monad
-import Control.Applicative
+import Control.Monad (void)
 
+import Text.Parsec ((<|>), (<?>), many, many1, satisfy)
 import qualified Text.Parsec as P
+import Text.Parsec.String (Parser)
 import qualified Text.Parsec.String as P
 
 import qualified Data.Maybe as May
@@ -16,99 +17,99 @@ import qualified Rash.Representation.Parse as RP
 parseFile :: FilePath -> IO (Either P.ParseError [RP.Instruction])
 parseFile = P.parseFromFile instructions
 
-symbol :: String -> P.Parser ()
+symbol :: String -> Parser ()
 symbol = P.try . void . P.string
 
 isLineEnd :: Char -> Bool
 isLineEnd c = c == '\n' || c == '\r'
 
-lineEnd :: P.Parser ()
-lineEnd = void $ P.satisfy isLineEnd
+lineEnd :: Parser ()
+lineEnd = void $ satisfy isLineEnd
 
-notLineEnd :: P.Parser Char
-notLineEnd = P.satisfy (not . isLineEnd)
+notLineEnd :: Parser Char
+notLineEnd = satisfy (not . isLineEnd)
 
-instructions :: P.Parser [RP.Instruction]
+instructions :: Parser [RP.Instruction]
 instructions =
   May.catMaybes <$>
   (P.sepEndBy ((comment >> pure Nothing)
-               P.<|> ((Just . RP.Label) <$> label)
-               P.<|> (exit >> pure (Just RP.Exit))
-               P.<|> ((Just . RP.Read) <$> readInstruction)
-               P.<|> ((Just . RP.Jump) <$> jump)
-               P.<|> ((Just . RP.JumpIfRetZero) <$> jumpZero)
-               P.<|> ((Just . uncurry RP.Run) <$> run)
-               P.<|> (Just <$> assignGeneral)
-               P.<?> "instruction")
-   (P.many lineEnd))
+               <|> ((Just . RP.Label) <$> label)
+               <|> (exit >> pure (Just RP.Exit))
+               <|> ((Just . RP.Read) <$> readInstruction)
+               <|> ((Just . RP.Jump) <$> jump)
+               <|> ((Just . RP.JumpIfRetZero) <$> jumpZero)
+               <|> ((Just . uncurry RP.Run) <$> run)
+               <|> (Just <$> assignGeneral)
+               <?> "instruction")
+   (many lineEnd))
 
 stringParts :: String -> [RP.Part]
-stringParts s = case P.parse (P.many stringPart) "input" s of
+stringParts s = case P.parse (many stringPart) "input" s of
   Left _ -> [] -- no errors anyway
   Right ps -> ps
-  where stringPart :: P.Parser RP.Part
+  where stringPart :: Parser RP.Part
         stringPart = (RP.IDPart False <$> idPart "$")
-                     P.<|> (RP.IDPart True <$> idPart "$'")
-                     P.<|> (RP.TextPart <$> textPart)
+                     <|> (RP.IDPart True <$> idPart "$'")
+                     <|> (RP.TextPart <$> textPart)
 
-idPart :: String -> P.Parser RP.ID
+idPart :: String -> Parser RP.ID
 idPart p = do
   symbol (p ++ "{")
-  var <- P.many1 (P.satisfy (/= '}'))
+  var <- many1 (satisfy (/= '}'))
   symbol "}"
   pure var
 
-textPart :: P.Parser String
-textPart = P.many1 (P.satisfy (/= '$'))
+textPart :: Parser String
+textPart = many1 (satisfy (/= '$'))
 
-comment :: P.Parser ()
+comment :: Parser ()
 comment = do
   symbol "#"
-  void $ P.many notLineEnd
+  void $ many notLineEnd
 
-label :: P.Parser RP.Label
+label :: Parser RP.Label
 label = do
   symbol ":"
-  P.many1 notLineEnd
+  many1 notLineEnd
 
-exit :: P.Parser ()
+exit :: Parser ()
 exit = P.try $ do
   symbol "exit"
   lineEnd
 
-readInstruction :: P.Parser RP.ID
+readInstruction :: Parser RP.ID
 readInstruction = do
   symbol "read "
-  P.many1 notLineEnd
+  many1 notLineEnd
 
-jump :: P.Parser RP.Label
+jump :: Parser RP.Label
 jump = do
   symbol "j "
-  P.many1 notLineEnd
+  many1 notLineEnd
 
-jumpZero :: P.Parser RP.Label
+jumpZero :: Parser RP.Label
 jumpZero = do
   symbol "jz "
-  P.many1 notLineEnd
+  many1 notLineEnd
 
-run :: P.Parser ([RP.Part], Maybe [RP.Part])
+run :: Parser ([RP.Part], Maybe [RP.Part])
 run = ((, Nothing) <$> runNoStdin)
        <|> ((\(t, u) -> (t, Just u)) <$> runStdin)
-  where runNoStdin :: P.Parser [RP.Part]
+  where runNoStdin :: Parser [RP.Part]
         runNoStdin = do
           symbol ">"
-          stringParts <$> P.many1 notLineEnd
+          stringParts <$> many1 notLineEnd
 
-        runStdin :: P.Parser ([RP.Part], [RP.Part])
+        runStdin :: Parser ([RP.Part], [RP.Part])
         runStdin = do
           symbol "<"
-          inp <- stringParts <$> P.many1 (P.satisfy (/= '>'))
+          inp <- stringParts <$> many1 (satisfy (/= '>'))
           cmd <- runNoStdin
           pure (cmd, inp)
 
-assignGeneral :: P.Parser RP.Instruction
+assignGeneral :: Parser RP.Instruction
 assignGeneral = do
-  var <- P.many1 (P.satisfy (/= '='))
+  var <- many1 (satisfy (/= '='))
   symbol "="
   ((uncurry (RP.AssignRun var) <$> run)
-   <|> (RP.Assign var <$> (stringParts <$> P.many1 notLineEnd)))
+   <|> (RP.Assign var <$> (stringParts <$> many1 notLineEnd)))
