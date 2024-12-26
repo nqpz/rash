@@ -76,15 +76,22 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
 
         instConv :: RP.Instruction -> RI.Instruction
         instConv = \case
-          RP.Read tid -> RI.Read (varMap M.! tid)
-          RP.Run command -> RI.Run (commandConv command)
+          RP.Read tid ->
+            RI.Read (varMap M.! tid)
+          RP.Run command ->
+            RI.Run (commandConv command)
           RP.AssignRun v command ->
             RI.AssignRun (varMap M.! v) (commandConv command)
-          RP.Assign v parts -> RI.Assign (varMap M.! v) (partsConv parts)
-          RP.JumpIfRetZero label -> RI.JumpIfRetZero (labelPoss M.! label)
-          RP.Jump label -> RI.Jump (labelPoss M.! label)
-          RP.Exit -> RI.Exit
-          RP.Label _ -> error "FATAL: all labels should have been removed"
+          RP.Assign v parts ->
+            RI.Assign (varMap M.! v) (partsConv parts)
+          RP.JumpIfRetZero label ->
+            RI.JumpIfRetZero (labelPoss M.! label)
+          RP.Jump label ->
+            RI.Jump (labelPoss M.! label)
+          RP.Exit ->
+            RI.Exit
+          RP.Label _ ->
+            error "FATAL: all labels should have been removed"
 
         partsConv :: [RP.Part] -> Sequence RI.Part
         partsConv = listToSequence . map partConv
@@ -111,13 +118,20 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
 
         instVars :: RP.Instruction -> [RP.ID]
         instVars = \case
-          RP.Read v -> [v]
-          RP.Run (RP.Command ps Nothing) -> partsVars ps
-          RP.Run (RP.Command ps0 (Just ps1)) -> partsVars (ps0 ++ ps1)
-          RP.AssignRun v (RP.Command ps Nothing) -> [v] ++ partsVars ps
-          RP.AssignRun v (RP.Command ps0 (Just ps1)) -> [v] ++ partsVars (ps0 ++ ps1)
-          RP.Assign v ps -> [v] ++ partsVars ps
-          _ -> []
+          RP.Read v ->
+            [v]
+          RP.Run (RP.Command ps Nothing) ->
+            partsVars ps
+          RP.Run (RP.Command ps0 (Just ps1)) ->
+            partsVars (ps0 ++ ps1)
+          RP.AssignRun v (RP.Command ps Nothing) ->
+            [v] ++ partsVars ps
+          RP.AssignRun v (RP.Command ps0 (Just ps1)) ->
+            [v] ++ partsVars (ps0 ++ ps1)
+          RP.Assign v ps ->
+            [v] ++ partsVars ps
+          _ ->
+            []
 
         partsVars :: [RP.Part] -> [RP.ID]
         partsVars = May.catMaybes . map partVar
