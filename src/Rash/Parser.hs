@@ -20,6 +20,11 @@ parseFile = P.parseFromFile instructions
 symbol :: String -> Parser ()
 symbol = P.try . void . P.string
 
+unarySymbol :: String -> Parser String
+unarySymbol s = do
+  symbol (s ++ " ")
+  many1 notLineEnd
+
 isLineEnd :: Char -> Bool
 isLineEnd c = c == '\n' || c == '\r'
 
@@ -78,19 +83,13 @@ exit = P.try $ do
   lineEnd
 
 readInstruction :: Parser RP.ID
-readInstruction = do
-  symbol "read "
-  many1 notLineEnd
+readInstruction = unarySymbol "read"
 
 jump :: Parser RP.Label
-jump = do
-  symbol "j "
-  many1 notLineEnd
+jump = unarySymbol "j"
 
 jumpZero :: Parser RP.Label
-jumpZero = do
-  symbol "jz "
-  many1 notLineEnd
+jumpZero = unarySymbol "jz"
 
 runInstruction :: Parser RP.Instruction
 runInstruction = RP.Run <$> command
