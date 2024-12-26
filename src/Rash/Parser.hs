@@ -39,7 +39,7 @@ instructions =
                <|> ((Just . RP.Jump) <$> jump)
                <|> ((Just . RP.JumpIfRetZero) <$> jumpZero)
                <|> ((Just . uncurry RP.Run) <$> run)
-               <|> (Just <$> assignGeneral)
+               <|> (Just <$> assignInstruction)
                <?> "instruction")
    (many lineEnd))
 
@@ -107,9 +107,13 @@ run = ((, Nothing) <$> runNoStdin)
           cmd <- runNoStdin
           pure (cmd, inp)
 
-assignGeneral :: Parser RP.Instruction
-assignGeneral = do
+assignInstruction :: Parser RP.Instruction
+assignInstruction = do
   var <- many1 (satisfy (/= '='))
   symbol "="
-  ((uncurry (RP.AssignRun var) <$> run)
-   <|> (RP.Assign var <$> (stringParts <$> many1 notLineEnd)))
+  assignRun var <|> assign var
+  where assignRun :: String -> Parser RP.Instruction
+        assignRun var = uncurry (RP.AssignRun var) <$> run
+
+        assign :: String -> Parser RP.Instruction
+        assign var = RP.Assign var <$> (stringParts <$> many1 notLineEnd)
