@@ -131,8 +131,8 @@ freezeState :: RI.State -> IO RI.IState
 freezeState st = do
   vars <- MA.freeze $ RI.stateVars st
   pure $ RI.IState { RI.iStatePC = RI.statePC st
-                  , RI.iStateVars = vars
-                  }
+                   , RI.iStateVars = vars
+                   }
 
 thawState :: RI.IState -> IO RI.State
 thawState ist = do
