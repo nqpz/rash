@@ -163,9 +163,7 @@ extractPart = \case
 interpretCommand :: RI.Command -> InterpM (Int, String)
 interpretCommand (RI.Command cmd stdinM) = do
   cmd' <- evalParts cmd
-  stdinM' <- case stdinM of
-    Nothing -> pure Nothing
-    Just stdin -> Just <$> evalParts stdin
+  stdinM' <- sequence (evalParts <$> stdinM)
   liftIO $ runProcess (T.unpack cmd') (T.unpack <$> stdinM')
 
 interpretInstruction :: RI.Instruction -> InterpM ()
