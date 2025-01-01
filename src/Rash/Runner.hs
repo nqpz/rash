@@ -143,7 +143,7 @@ asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
 rashPaths :: FilePath -> FilePath -> IO RI.RashPaths
 rashPaths stateDir fname = do
   fnameCanon <- Dir.canonicalizePath fname
-  let fnameSave = Path.combine stateDir "rash" ++ fnameCanon
+  let fnameSave = stateDir ++ fnameCanon
       dirSave = fst $ Path.splitFileName fnameSave
       asmSave = fnameSave ++ ".asm"
       stateSave = fnameSave ++ ".state"
