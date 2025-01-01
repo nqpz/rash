@@ -108,13 +108,13 @@ initial arguments passed to your program.
 Rash saves its state to files in a directory.  The directory is
 determined by this algorithm:
 
-1. Is `$RASH_STATE_DIR` set?  Then save the state in `$RASH_STATE_DIR`.  If
-   not, go to step 2.
-2. Is `$XDG_HOME_STATE` set?  Then save the state in
-   `$XDG_HOME_STATE/rash`, as per the [XDG Base Directory
-   Specification](https://specifications.freedesktop.org/basedir-spec/latest/#variables).
-   If not, go to step 3.
-3. Save the state in `$HOME/.local/state/rash`.
+  1. Is `$RASH_STATE_DIR` set?  Then save the state in
+     `$RASH_STATE_DIR`.  If not, go to step 2.
+  2. Is `$XDG_HOME_STATE` set?  Then save the state in
+     `$XDG_HOME_STATE/rash`, as per the [XDG Base Directory
+     Specification](https://specifications.freedesktop.org/basedir-spec/latest/#variables).
+     If not, go to step 3.
+  3. Save the state in `$HOME/.local/state/rash`.
 
 If the given directory does not exist, rash will create it.
 
@@ -122,16 +122,16 @@ If the given directory does not exist, rash will create it.
 
 The pipeline of `rash` loading a new file looks like this:
 
-  0. Parse the file into a list of intermediate
+  1. Parse the file into a list of intermediate
      `Rash.Representation.Parse.Instruction` instructions.
 
-  1. Convert the `Rash.Representation.Parse.Assembly` into an optimized
+  2. Convert the `Rash.Representation.Parse.Assembly` into an optimized
      `Rash.Representation.Internal.Assembly` type, where jumps to labels
      are converted to jumps to absolute instructions, and variable names
      are converted to variable indexes.  Also turn all strings into
      `Data.Text.Text` values.
 
-  2. Interpret.
+  3. Interpret.
 
 ## License
 
