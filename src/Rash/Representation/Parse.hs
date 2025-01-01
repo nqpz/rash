@@ -15,27 +15,27 @@ data Part = TextPart String
           | IDPart Bool ID
           deriving (Show)
 
-data Command = Command { tempCommandParts :: [Part]
-                       , tempAssignStdin :: Maybe [Part]
+data Command = Command { commandParts :: [Part]
+                       , assignStdin :: Maybe [Part]
                        }
              deriving (Show)
 
-data Instruction = Read { tempAssignID :: ID
+data Instruction = Read { assignID :: ID
                         }
                  | Run { command :: Command
                        }
-                 | AssignRun { tempAssignID :: ID
+                 | AssignRun { assignID :: ID
                              , command :: Command
                              }
-                 | Assign { tempAssignID :: ID
-                          , tempContentParts :: [Part]
+                 | Assign { assignID :: ID
+                          , contentParts :: [Part]
                           }
-                 | JumpIfRetZero { tempJumpPos :: Label
+                 | JumpIfRetZero { jumpPos :: Label
                                  }
-                 | Jump { tempJumpPos :: Label
+                 | Jump { jumpPos :: Label
                         }
                  | Exit
-                 | Label { tempLabel :: Label
+                 | Label { label :: Label
                          }
                  deriving (Show)
 

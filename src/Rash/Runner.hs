@@ -48,7 +48,7 @@ runFile stateDir fname readArgs = do
           Exit.exitFailure
         Right insts -> do
           let insts' = RP.Assign "initial_arguments" [RP.TextPart readArgs] : insts
-          let (a, nVars) = asmTempToAsm $ RP.Assembly insts'
+          let (a, nVars) = asmParseToInternal $ RP.Assembly insts'
           s <- emptyState nVars
           pure (a, s)
 
@@ -58,14 +58,14 @@ runFile stateDir fname readArgs = do
                            }
   interpret context state
 
-isTempLabel :: RP.Instruction -> Bool
-isTempLabel (RP.Label _) = True
-isTempLabel _ = False
+isParseLabel :: RP.Instruction -> Bool
+isParseLabel (RP.Label _) = True
+isParseLabel _ = False
 
-asmTempToAsm :: RP.Assembly -> (RI.Assembly, Int)
-asmTempToAsm (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
+asmParseToInternal :: RP.Assembly -> (RI.Assembly, Int)
+asmParseToInternal (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
   where insts' :: [RP.Instruction]
-        insts' = filter (not . isTempLabel) insts
+        insts' = filter (not . isParseLabel) insts
 
         insts'' :: [RI.Instruction]
         insts'' = map instConv insts'
