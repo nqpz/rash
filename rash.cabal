@@ -29,6 +29,7 @@ executable rash
         Rash.Representation.Internal
         Rash.Parser
         Rash.Interpreter
+        Rash.StateDirGetter
         Rash.Runner
     default-language: GHC2021
     default-extensions:
