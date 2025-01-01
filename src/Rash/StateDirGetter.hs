@@ -1,8 +1,16 @@
-module Rash.StateDirGetter (getStateDir) where
+module Rash.StateDirGetter (getOrCreateStateDir) where
 
 import Control.Exception (try)
 import qualified System.Directory as Dir
 import qualified System.Environment as Env
+import System.FilePath ((</>))
+
+firstJust :: Monad m => m (Maybe a) -> m (Maybe a) -> m (Maybe a)
+firstJust mma mmb = do
+  ma <- mma
+  case ma of
+    Just a -> pure $ Just a
+    Nothing -> mmb
 
 lookupEnv :: String -> IO (Maybe String)
 lookupEnv envVar = do
@@ -12,31 +20,45 @@ lookupEnv envVar = do
     Just "" -> Nothing
     Just s -> Just s
 
-stateDirEnvVar :: String
-stateDirEnvVar = "RASH_STATE_DIR"
+rashEnvVar :: String
+rashEnvVar = "RASH_STATE_DIR"
 
-stateDirEnvVarEmptyError :: IO a
-stateDirEnvVarEmptyError =
-  fail ("Could not run. Please set the "
-        ++ stateDirEnvVar
-        ++ " environment variable to a directory.")
+xdgEnvVar :: String
+xdgEnvVar = "XDG_HOME_STATE"
 
-stateDirEnvVarCouldNotCreateDir :: FilePath -> IOError -> IO a
-stateDirEnvVarCouldNotCreateDir stateDir exception =
-  fail ("Could not create the directory "
-        ++ stateDir
-        ++ " from the environment variable "
-        ++ stateDirEnvVar
-        ++ ": "
-        ++ show exception)
+homeEnvVar :: String
+homeEnvVar = "HOME"
 
 getStateDir :: IO FilePath
 getStateDir = do
-  lookupResult <- lookupEnv stateDirEnvVar
-  stateDir <- case lookupResult of
-    Just s -> pure s
-    Nothing -> stateDirEnvVarEmptyError
-  createResult <- try (Dir.createDirectoryIfMissing True stateDir) :: IO (Either IOError ())
+  stateDirResult <-
+    firstJust
+    (lookupEnv rashEnvVar)
+    (firstJust
+     (((</> "rash") <$>) <$> lookupEnv xdgEnvVar)
+     (((</> ".local" </> "state" </> "rash") <$>) <$> lookupEnv homeEnvVar))
+  case stateDirResult of
+    Just stateDir ->
+      pure stateDir
+    Nothing ->
+      fail ("Neither "
+            ++ rashEnvVar
+            ++ ", "
+            ++ xdgEnvVar
+            ++ ", or"
+            ++ homeEnvVar
+            ++ " are set. Cannot determine state directory for rash.")
+
+getOrCreateStateDir :: IO FilePath
+getOrCreateStateDir = do
+  stateDir <- getStateDir
+  createResult <-
+    try (Dir.createDirectoryIfMissing True stateDir) :: IO (Either IOError ())
   case createResult of
-    Left exception -> stateDirEnvVarCouldNotCreateDir stateDir exception
-    Right () -> pure stateDir
+    Left exception ->
+      fail ("Could not create the directory "
+            ++ stateDir
+            ++ ": "
+            ++ show exception)
+    Right () ->
+      pure stateDir

@@ -103,6 +103,21 @@ For now, no special characters can be escaped.
 You can use the special variable `${initial_arguments}` to get the
 initial arguments passed to your program.
 
+## State directory
+
+Rash saves its state to files in a directory.  The directory is
+determined by this algorithm:
+
+1. Is `$RASH_STATE_DIR` set?  Then save the state in `$RASH_STATE_DIR`.  If
+   not, go to step 2.
+2. Is `$XDG_HOME_STATE` set?  Then save the state in
+   `$XDG_HOME_STATE/rash`, as per the [XDG Base Directory
+   Specification](https://specifications.freedesktop.org/basedir-spec/latest/#variables).
+   If not, go to step 3.
+3. Save the state in `$HOME/.local/state/rash`.
+
+If the given directory does not exist, rash will create it.
+
 ## Developer documentation
 
 The pipeline of `rash` loading a new file looks like this:
