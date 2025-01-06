@@ -5,7 +5,7 @@ module Rash.Interpreter
   ) where
 
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, ask)
-import Control.Monad.State (StateT, MonadState, runStateT, get, put, MonadIO, liftIO)
+import Control.Monad.State (StateT, MonadState, runStateT, get, put, modify, MonadIO, liftIO)
 import Control.Exception
 
 import qualified Text.ShellEscape as TSE
@@ -56,9 +56,7 @@ runInterpM :: InterpM a -> RI.Context -> RI.State -> IO (a, RI.State)
 runInterpM m context = runStateT (runReaderT (unInterpM m) context)
 
 setPC :: Int -> InterpM ()
-setPC pc = do
-  s <- get
-  put s { RI.statePC = pc }
+setPC pc = modify (\s -> s { RI.statePC = pc })
 
 modifyPC :: (Int -> Int) -> InterpM ()
 modifyPC f = do
@@ -66,9 +64,7 @@ modifyPC f = do
   setPC $ f pc
 
 setExitCode :: Int -> InterpM ()
-setExitCode ec = do
-  s <- get
-  put s { RI.statePrevExitCode = ec }
+setExitCode ec = modify (\s -> s { RI.statePrevExitCode = ec })
 
 getVar :: Int -> InterpM T.Text
 getVar i = do
