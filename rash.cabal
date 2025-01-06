@@ -15,6 +15,7 @@ executable rash
     build-depends:
         base >=4.14 && <4.20
       , containers
+      , mtl
       , array
       , parsec
       , text

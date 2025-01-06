@@ -4,8 +4,8 @@ module Rash.Interpreter
   , thawState
   ) where
 
-import Control.Monad
-import Control.Monad.IO.Class
+import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, ask)
+import Control.Monad.State (StateT, MonadState, runStateT, get, put, MonadIO, liftIO)
 import Control.Exception
 
 import qualified Text.ShellEscape as TSE
@@ -48,58 +48,36 @@ runProcess cmdAndArgs stdinM = do
   pure (i, stdout)
 
 
-newtype InterpM a = InterpM { runInterpM :: RI.Context -> RI.State -> IO (a, RI.State)
+newtype InterpM a = InterpM { unInterpM :: ReaderT RI.Context (StateT RI.State IO) a
                             }
+  deriving (Functor, Applicative, Monad, MonadReader RI.Context, MonadState RI.State, MonadIO)
 
-instance Monad InterpM where
-  m >>= f = InterpM $ \c s -> do
-    (x', s') <- runInterpM m c s
-    runInterpM (f x') c s'
-
-instance Functor InterpM where
-  fmap = liftM
-
-instance Applicative InterpM where
-  pure x = InterpM $ \_ s -> pure (x, s)
-  (<*>) = ap
-
-instance MonadIO InterpM where
-  liftIO m = InterpM $ \_ s -> do
-    r <- m
-    pure (r, s)
-
-getContext :: InterpM RI.Context
-getContext = InterpM $ \c s -> pure (c, s)
-
-getState :: InterpM RI.State
-getState = InterpM $ \_ s -> pure (s, s)
-
-putState :: RI.State -> InterpM ()
-putState s = InterpM $ \_ _ -> pure ((), s)
+runInterpM :: InterpM a -> RI.Context -> RI.State -> IO (a, RI.State)
+runInterpM m context = runStateT (runReaderT (unInterpM m) context)
 
 setPC :: Int -> InterpM ()
 setPC pc = do
-  s <- getState
-  putState s { RI.statePC = pc }
+  s <- get
+  put s { RI.statePC = pc }
 
 modifyPC :: (Int -> Int) -> InterpM ()
 modifyPC f = do
-  pc <- RI.statePC <$> getState
+  pc <- RI.statePC <$> get
   setPC $ f pc
 
 setExitCode :: Int -> InterpM ()
 setExitCode ec = do
-  s <- getState
-  putState s { RI.statePrevExitCode = ec }
+  s <- get
+  put s { RI.statePrevExitCode = ec }
 
 getVar :: Int -> InterpM T.Text
 getVar i = do
-  vars <- RI.stateVars <$> getState
+  vars <- RI.stateVars <$> get
   liftIO $ MA.readArray vars i
 
 setVar :: Int -> T.Text -> InterpM ()
 setVar i t = do
-  vars <- RI.stateVars <$> getState
+  vars <- RI.stateVars <$> get
   liftIO $ MA.writeArray vars i t
 
 interpret :: RI.Context -> RI.State -> IO ()
@@ -109,8 +87,8 @@ interpretM :: Int -> InterpM ()
 interpretM nSteps
   | nSteps > maxNSteps = liftIO $ putStrLn "Too many steps; stopping."
   | otherwise = do
-    pc <- RI.statePC <$> getState
-    RI.Assembly insts <- RI.contextAssembly <$> getContext
+    pc <- RI.statePC <$> get
+    RI.Assembly insts <- RI.contextAssembly <$> ask
     if pc >= sequenceLength insts
       then interpretInstruction RI.Exit
       else do
@@ -169,13 +147,13 @@ interpretCommand (RI.Command cmd stdinM) = do
 interpretInstruction :: RI.Instruction -> InterpM ()
 interpretInstruction = \case
   RI.Read var -> do
-    s <- getState
-    c <- getContext
+    s <- get
+    c <- ask
 
     if RI.stateJustRestarted s
       then do
       setVar var $ RI.contextReadArgs c
-      putState s { RI.stateJustRestarted = False }
+      put s { RI.stateJustRestarted = False }
       modifyPC (+ 1)
       setExitCode 0
 
@@ -206,7 +184,7 @@ interpretInstruction = \case
     setExitCode 0
 
   RI.JumpIfRetZero p -> do
-    ec <- RI.statePrevExitCode <$> getState
+    ec <- RI.statePrevExitCode <$> get
     if (ec == 0)
       then setPC p
       else modifyPC (+ 1)
@@ -217,7 +195,7 @@ interpretInstruction = \case
     setExitCode 0
 
   RI.Exit -> do
-    paths <- RI.contextPaths <$> getContext
+    paths <- RI.contextPaths <$> ask
     liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ do
       Dir.removeFile $ RI.pathASM paths
       Dir.removeFile $ RI.pathState paths
