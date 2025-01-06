@@ -5,6 +5,7 @@ module Rash.Representation.Internal
   , Command(..)
   , Instruction(..)
   , Assembly(..)
+  , IOStateKeeping(..)
   , Context(..)
   , State(..)
   , IState(..)
@@ -68,9 +69,13 @@ data Instruction = Read { assignID :: ID
 data Assembly = Assembly (Sequence Instruction)
               deriving (Read, Show)
 
+data IOStateKeeping = WriteAndReadFiles
+  deriving (Show)
+
 data Context = Context { contextAssembly :: Assembly
                        , contextReadArgs :: T.Text
                        , contextPaths :: RashPaths
+                       , contextIOStateKeeping :: IOStateKeeping
                        }
              deriving (Show)
 

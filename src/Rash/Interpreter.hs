@@ -134,6 +134,15 @@ extractPart = \case
                       pure $ if b then shEsc r else r
           where shEsc = TE.decodeUtf8 . TSE.bytes . TSE.sh . TE.encodeUtf8
 
+dumpState :: RI.Context -> RI.IState -> IO ()
+dumpState c iState =
+  let asm = RI.contextAssembly c
+  in case RI.contextIOStateKeeping c of
+       RI.WriteAndReadFiles -> do
+         let paths = RI.contextPaths c
+         liftIO $ writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
+         liftIO $ writeFile (RI.pathState paths) (show iState)
+
 interpretCommand :: RI.Command -> InterpM (Int, String)
 interpretCommand (RI.Command cmd stdinM) = do
   cmd' <- evalParts cmd
@@ -154,11 +163,8 @@ interpretInstruction = \case
       setExitCode 0
 
       else do
-      let paths = RI.contextPaths c
-          asm = RI.contextAssembly c
       iState <- liftIO $ freezeState s
-      liftIO $ writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
-      liftIO $ writeFile (RI.pathState paths) (show iState)
+      liftIO $ dumpState c iState
       liftIO Exit.exitSuccess
 
   RI.Run command -> do

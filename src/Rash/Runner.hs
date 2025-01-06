@@ -19,25 +19,23 @@ import qualified Rash.Representation.Internal as RI
 import Rash.Interpreter (interpret, emptyState, thawState)
 import Rash.Parser (parseFile)
 
+retrieveState :: RI.IOStateKeeping -> RI.RashPaths -> FilePath -> String -> IO (RI.Assembly, RI.State)
+retrieveState ioStateKeeping paths fname readArgs = case ioStateKeeping of
+  RI.WriteAndReadFiles -> do
+    Dir.createDirectoryIfMissing True $ RI.pathDir paths
 
-runFile :: FilePath -> FilePath -> String -> IO ()
-runFile stateDir fname readArgs = do
-  paths <- rashPaths stateDir fname
-  Dir.createDirectoryIfMissing True $ RI.pathDir paths
+    -- The following code is fragile.
+    asmExists <- Dir.doesFileExist $ RI.pathASM paths
+    stateExists <- Dir.doesFileExist $ RI.pathState paths
+    when (asmExists /= stateExists) $ do
+      when asmExists $ Dir.removeFile $ RI.pathASM paths
+      when stateExists $ Dir.removeFile $ RI.pathState paths
+      Exit.exitFailure
 
-  -- The following code is fragile.
-  asmExists <- Dir.doesFileExist $ RI.pathASM paths
-  stateExists <- Dir.doesFileExist $ RI.pathState paths
-  when (asmExists /= stateExists) $ do
-    when asmExists $ Dir.removeFile $ RI.pathASM paths
-    when stateExists $ Dir.removeFile $ RI.pathState paths
-    Exit.exitFailure
-
-  (asm, state) <-
     if asmExists
     then do
-      a <- (read <$> (readFile $ RI.pathASM paths))
-      i <- (read <$> (readFile $ RI.pathState paths))
+      a <- read <$> (readFile $ RI.pathASM paths)
+      i <- read <$> (readFile $ RI.pathState paths)
       s <- thawState i
       pure (a, s)
     else do
@@ -52,9 +50,14 @@ runFile stateDir fname readArgs = do
           s <- emptyState nVars
           pure (a, s)
 
+runFile :: RI.IOStateKeeping -> FilePath -> FilePath -> String -> IO ()
+runFile ioStateKeeping stateDir fname readArgs = do
+  paths <- rashPaths stateDir fname
+  (asm, state) <- retrieveState ioStateKeeping paths fname readArgs
   let context = RI.Context { RI.contextAssembly = asm
                            , RI.contextReadArgs = T.pack readArgs
                            , RI.contextPaths = paths
+                           , RI.contextIOStateKeeping = ioStateKeeping
                            }
   interpret context state
 
