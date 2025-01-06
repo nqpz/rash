@@ -91,13 +91,6 @@ interpretM nSteps
       interpretInstruction instCur
       interpretM (nSteps + 1)
 
-freezeState :: RI.State -> IO RI.IState
-freezeState st = do
-  vars <- MA.freeze $ RI.stateVars st
-  pure $ RI.IState { RI.iStatePC = RI.statePC st
-                   , RI.iStateVars = vars
-                   }
-
 evalParts :: Sequence RI.Part -> InterpM T.Text
 evalParts ps = do
   let ps1 = extractParts ps
@@ -135,8 +128,7 @@ interpretInstruction = \case
       setExitCode 0
 
       else do
-      iState <- liftIO $ freezeState s
-      liftIO $ dumpState (RI.contextPaths c) (RI.contextAssembly c) iState (RI.contextIOStateKeeping c)
+      liftIO $ dumpState (RI.contextPaths c) (RI.contextAssembly c) s (RI.contextIOStateKeeping c)
       liftIO Exit.exitSuccess
 
   RI.Run command -> do

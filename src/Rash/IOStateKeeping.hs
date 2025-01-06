@@ -14,9 +14,10 @@ import Rash.Representation.ParseToInternal (asmParseToInternal)
 import qualified Rash.Representation.Parse as RP
 import qualified Rash.Representation.Internal as RI
 
-dumpState :: RI.RashPaths -> RI.Assembly -> RI.IState -> RI.IOStateKeeping -> IO ()
-dumpState paths asm iState = \case
+dumpState :: RI.RashPaths -> RI.Assembly -> RI.State -> RI.IOStateKeeping -> IO ()
+dumpState paths asm state = \case
   RI.WriteAndReadFiles -> do
+    iState <- freezeState state
     writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
     writeFile (RI.pathState paths) (show iState)
 
@@ -59,6 +60,13 @@ emptyState nVars = do
                 , RI.stateJustRestarted = False
                 , RI.statePrevExitCode = 0
                 }
+
+freezeState :: RI.State -> IO RI.IState
+freezeState st = do
+  vars <- MA.freeze $ RI.stateVars st
+  pure $ RI.IState { RI.iStatePC = RI.statePC st
+                   , RI.iStateVars = vars
+                   }
 
 thawState :: RI.IState -> IO RI.State
 thawState ist = do
