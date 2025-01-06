@@ -157,7 +157,7 @@ interpretInstruction = \case
       let paths = RI.contextPaths c
           asm = RI.contextAssembly c
       iState <- liftIO $ freezeState s
-      liftIO $ writeFile (RI.pathASM paths) (show asm)
+      liftIO $ writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
       liftIO $ writeFile (RI.pathState paths) (show iState)
       liftIO Exit.exitSuccess
 
