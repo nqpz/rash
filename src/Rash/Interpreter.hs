@@ -1,7 +1,5 @@
 module Rash.Interpreter
   ( interpret
-  , emptyState
-  , thawState
   ) where
 
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, ask)
@@ -23,6 +21,7 @@ import qualified Data.List as L
 
 import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
 import qualified Rash.Representation.Internal as RI
+import Rash.IOStateKeeping (dumpState)
 
 
 -- SETTTINGS
@@ -92,30 +91,12 @@ interpretM nSteps
       interpretInstruction instCur
       interpretM (nSteps + 1)
 
-emptyState :: Int -> IO RI.State
-emptyState nVars = do
-  vars <- MA.newArray (0, nVars - 1) (T.pack "")
-  pure RI.State { RI.statePC = 0
-                , RI.stateVars = vars
-                , RI.stateJustRestarted = False
-                , RI.statePrevExitCode = 0
-                }
-
 freezeState :: RI.State -> IO RI.IState
 freezeState st = do
   vars <- MA.freeze $ RI.stateVars st
   pure $ RI.IState { RI.iStatePC = RI.statePC st
                    , RI.iStateVars = vars
                    }
-
-thawState :: RI.IState -> IO RI.State
-thawState ist = do
-  vars <- MA.thaw $ RI.iStateVars ist
-  pure $ RI.State { RI.statePC = RI.iStatePC ist
-                  , RI.stateVars = vars
-                  , RI.stateJustRestarted = True
-                  , RI.statePrevExitCode = 0
-                  }
 
 evalParts :: Sequence RI.Part -> InterpM T.Text
 evalParts ps = do
@@ -133,15 +114,6 @@ extractPart = \case
   RI.IDPart b v -> do r <- getVar v
                       pure $ if b then shEsc r else r
           where shEsc = TE.decodeUtf8 . TSE.bytes . TSE.sh . TE.encodeUtf8
-
-dumpState :: RI.Context -> RI.IState -> IO ()
-dumpState c iState =
-  let asm = RI.contextAssembly c
-  in case RI.contextIOStateKeeping c of
-       RI.WriteAndReadFiles -> do
-         let paths = RI.contextPaths c
-         liftIO $ writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
-         liftIO $ writeFile (RI.pathState paths) (show iState)
 
 interpretCommand :: RI.Command -> InterpM (Int, String)
 interpretCommand (RI.Command cmd stdinM) = do
@@ -164,7 +136,7 @@ interpretInstruction = \case
 
       else do
       iState <- liftIO $ freezeState s
-      liftIO $ dumpState c iState
+      liftIO $ dumpState (RI.contextPaths c) (RI.contextAssembly c) iState (RI.contextIOStateKeeping c)
       liftIO Exit.exitSuccess
 
   RI.Run command -> do

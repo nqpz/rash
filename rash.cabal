@@ -29,6 +29,7 @@ executable rash
         Rash.Representation.Parse
         Rash.Representation.Internal
         Rash.Parser
+        Rash.IOStateKeeping
         Rash.Interpreter
         Rash.StateDirGetter
         Rash.Runner
