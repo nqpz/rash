@@ -28,6 +28,7 @@ executable rash
         Rash.SequenceUtilities
         Rash.Representation.Parse
         Rash.Representation.Internal
+        Rash.Representation.ParseToInternal
         Rash.Parser
         Rash.IOStateKeeping
         Rash.Interpreter
