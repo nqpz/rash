@@ -48,8 +48,8 @@ runProcess cmdAndArgs stdinM = do
   pure (i, stdout)
 
 
-data InterpM a = InterpM { runInterpM :: RI.Context -> RI.State -> IO (a, RI.State)
-                         }
+newtype InterpM a = InterpM { runInterpM :: RI.Context -> RI.State -> IO (a, RI.State)
+                            }
 
 instance Monad InterpM where
   m >>= f = InterpM $ \c s -> do
