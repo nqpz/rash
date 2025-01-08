@@ -91,7 +91,13 @@ interpretM nSteps
       continue <- interpretInstruction instCur
       if continue
         then interpretM (nSteps + 1)
-        else liftIO Exit.exitSuccess
+        else do
+        k <- RI.contextIOStateKeeping <$> ask
+        case k of
+          RI.WriteAndReadFiles ->
+            liftIO Exit.exitSuccess
+          RI.InMemory _ _ ->
+            pure ()
 
 evalParts :: Sequence RI.Part -> InterpM T.Text
 evalParts ps = do
