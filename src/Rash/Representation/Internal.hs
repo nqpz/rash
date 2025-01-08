@@ -71,7 +71,7 @@ data Assembly = Assembly (Sequence Instruction)
               deriving (Read, Show)
 
 data IOStateKeeping = WriteAndReadFiles
-                    | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState)) (String -> IO ())
+                    | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState)) (String -> IO ()) (IO ())
 
 instance Show IOStateKeeping where
   show = const "<IOStateKeeping>"
