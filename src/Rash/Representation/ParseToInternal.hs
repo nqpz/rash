@@ -7,12 +7,12 @@ import qualified Data.List as L
 import qualified Data.Map as M
 import qualified Data.Maybe as May
 
-import Rash.SequenceUtilities (Sequence, listToSequence)
+import Rash.Array (Array, listToArray)
 import qualified Rash.Representation.Parse as RP
 import qualified Rash.Representation.Internal as RI
 
 asmParseToInternal :: RP.Assembly -> (RI.Assembly, Int)
-asmParseToInternal (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', nVars)
+asmParseToInternal (RP.Assembly insts) = (RI.Assembly $ listToArray insts'', nVars)
   where insts' :: [RP.Instruction]
         insts' = filter (not . isParseLabel) insts
 
@@ -41,8 +41,8 @@ asmParseToInternal (RP.Assembly insts) = (RI.Assembly $ listToSequence insts'', 
           RP.Label _ ->
             error "FATAL: all labels should have been removed"
 
-        partsConv :: [RP.Part] -> Sequence RI.Part
-        partsConv = listToSequence . map partConv
+        partsConv :: [RP.Part] -> Array RI.Part
+        partsConv = listToArray . map partConv
 
         partConv :: RP.Part -> RI.Part
         partConv = \case

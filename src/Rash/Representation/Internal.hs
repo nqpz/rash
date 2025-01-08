@@ -14,7 +14,7 @@ module Rash.Representation.Internal
 import qualified Data.Text as T
 import Data.IORef (IORef)
 
-import Rash.SequenceUtilities (Sequence, SequenceIO)
+import Rash.Array (Array, ArrayIO)
 
 
 data RashPaths = RashPaths { pathDir :: FilePath
@@ -29,8 +29,8 @@ data Part = TextPart T.Text
           | IDPart Bool ID
           deriving (Read, Show)
 
-data Command = Command { commandParts :: Sequence Part
-                       , assignStdin :: Maybe (Sequence Part)
+data Command = Command { commandParts :: Array Part
+                       , assignStdin :: Maybe (Array Part)
                        }
          deriving (Read, Show)
 
@@ -49,7 +49,7 @@ data Instruction = Read { assignID :: ID
                    -- out to a register.  Optionally, supply standard in.
 
                  | Assign { assignID :: ID
-                          , contentParts :: Sequence Part
+                          , contentParts :: Array Part
                           }
                    -- ^ Assign text to a register.
 
@@ -67,7 +67,7 @@ data Instruction = Read { assignID :: ID
                    -- ^ Stop and exit.
               deriving (Read, Show)
 
-data Assembly = Assembly (Sequence Instruction)
+data Assembly = Assembly (Array Instruction)
               deriving (Read, Show)
 
 data IOStateKeeping = WriteAndReadFiles RashPaths
@@ -83,12 +83,12 @@ data Context = Context { contextAssembly :: Assembly
              deriving (Show)
 
 data State = State { statePC :: Int
-                   , stateVars :: SequenceIO T.Text
+                   , stateVars :: ArrayIO T.Text
                    , stateJustRestarted :: Bool
                    , statePrevExitCode :: Int
                    }
 
 data IState = IState { iStatePC :: Int
-                     , iStateVars :: Sequence T.Text
+                     , iStateVars :: Array T.Text
                      }
             deriving (Read, Show)

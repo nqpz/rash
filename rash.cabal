@@ -25,7 +25,7 @@ executable rash
       , shell-escape
     hs-source-dirs:   src
     other-modules:
-        Rash.SequenceUtilities
+        Rash.Array
         Rash.Representation.Parse
         Rash.Representation.Internal
         Rash.Representation.ParseToInternal

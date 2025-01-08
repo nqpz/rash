@@ -19,7 +19,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.List as L
 
-import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
+import Rash.Array (Array, sequenceLength, sequenceToList)
 import qualified Rash.Representation.Internal as RI
 import Rash.IOStateKeeping (dumpState, cleanState)
 
@@ -99,14 +99,14 @@ interpretM nSteps
           RI.InMemory _ _ _ signalExit ->
             liftIO signalExit
 
-evalParts :: Sequence RI.Part -> InterpM T.Text
+evalParts :: Array RI.Part -> InterpM T.Text
 evalParts ps = do
   let ps1 = extractParts ps
       ps2 = sequenceToList ps1
   ps3 <- mapM id ps2
   pure $ T.concat ps3
 
-extractParts :: Sequence RI.Part -> Sequence (InterpM T.Text)
+extractParts :: Array RI.Part -> Array (InterpM T.Text)
 extractParts = IA.amap extractPart
 
 extractPart :: RI.Part -> InterpM T.Text
