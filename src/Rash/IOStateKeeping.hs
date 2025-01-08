@@ -17,20 +17,20 @@ import qualified Rash.Representation.Parse as RP
 import qualified Rash.Representation.Internal as RI
 
 -- TODO: Do we need to write the assembly every time if there are multiple reads?
-dumpState :: RI.RashPaths -> RI.Assembly -> RI.State -> RI.IOStateKeeping -> IO ()
-dumpState paths asm state ioStateKeeping = do
+dumpState :: RI.Assembly -> RI.State -> RI.IOStateKeeping -> IO ()
+dumpState asm state ioStateKeeping = do
   iState <- freezeState state
   case ioStateKeeping of
-    RI.WriteAndReadFiles -> do
+    RI.WriteAndReadFiles paths -> do
       writeFile (RI.pathASM paths) (show asm)
       writeFile (RI.pathState paths) (show iState)
     RI.InMemory asmMRef stateMRef _ _ -> do
       writeIORef asmMRef (Just asm)
       writeIORef stateMRef (Just iState)
 
-retrieveState :: RI.RashPaths -> FilePath -> String -> RI.IOStateKeeping -> IO (RI.Assembly, RI.State)
-retrieveState paths fname readArgs = \case
-  RI.WriteAndReadFiles -> do
+retrieveState :: FilePath -> String -> RI.IOStateKeeping -> IO (RI.Assembly, RI.State)
+retrieveState fname readArgs = \case
+  RI.WriteAndReadFiles paths -> do
     Dir.createDirectoryIfMissing True $ RI.pathDir paths
 
     -- The following code is fragile.
@@ -77,9 +77,9 @@ retrieveNewState fname readArgs = do
       s <- emptyState nVars
       pure (a, s)
 
-cleanState :: RI.RashPaths -> RI.IOStateKeeping -> IO ()
-cleanState paths = \case
-  RI.WriteAndReadFiles -> do
+cleanState :: RI.IOStateKeeping -> IO ()
+cleanState = \case
+  RI.WriteAndReadFiles paths -> do
     Dir.removeFile $ RI.pathASM paths
     Dir.removeFile $ RI.pathState paths
   RI.InMemory _ _ _ _ ->

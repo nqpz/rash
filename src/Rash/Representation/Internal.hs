@@ -70,7 +70,7 @@ data Instruction = Read { assignID :: ID
 data Assembly = Assembly (Sequence Instruction)
               deriving (Read, Show)
 
-data IOStateKeeping = WriteAndReadFiles
+data IOStateKeeping = WriteAndReadFiles RashPaths
                     | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState)) (String -> IO ()) (IO ())
 
 instance Show IOStateKeeping where
@@ -78,7 +78,6 @@ instance Show IOStateKeeping where
 
 data Context = Context { contextAssembly :: Assembly
                        , contextReadArgs :: T.Text
-                       , contextPaths :: RashPaths
                        , contextIOStateKeeping :: IOStateKeeping
                        }
              deriving (Show)

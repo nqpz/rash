@@ -94,7 +94,7 @@ interpretM nSteps
         else do
         k <- RI.contextIOStateKeeping <$> ask
         case k of
-          RI.WriteAndReadFiles ->
+          RI.WriteAndReadFiles _ ->
             liftIO Exit.exitSuccess
           RI.InMemory _ _ _ signalExit ->
             liftIO signalExit
@@ -136,14 +136,14 @@ interpretInstruction = \case
       setExitCode 0
       pure True
       else do
-      liftIO $ dumpState (RI.contextPaths c) (RI.contextAssembly c) s (RI.contextIOStateKeeping c)
+      liftIO $ dumpState (RI.contextAssembly c) s (RI.contextIOStateKeeping c)
       pure False
 
   RI.Run command -> do
     (ec, out) <- interpretCommand command
     k <- RI.contextIOStateKeeping <$> ask
     case k of
-      RI.WriteAndReadFiles ->
+      RI.WriteAndReadFiles _ ->
         liftIO $ putStr out
       RI.InMemory _ _ add _ ->
         liftIO $ add out
@@ -180,5 +180,5 @@ interpretInstruction = \case
 
   RI.Exit -> do
     c <- ask
-    liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ cleanState (RI.contextPaths c) (RI.contextIOStateKeeping c)
+    liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ cleanState (RI.contextIOStateKeeping c)
     pure False
