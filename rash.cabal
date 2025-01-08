@@ -56,7 +56,9 @@ test-suite rash-test
     hs-source-dirs:   test
     main-is:          Test.hs
     other-modules:
+        Paths_rash
         InterpreterTests
     build-depends:
         base >=4.14 && <4.20
       , rash
+    data-files: test/programs/*

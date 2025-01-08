@@ -1,0 +1,6 @@
+>echo Please enter the first number.
+read number1
+>echo Please enter the second number.
+read number2
+result=>expr ${number1} + ${number2}
+>echo ${number1} + ${number2} = ${result}
