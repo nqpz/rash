@@ -28,6 +28,8 @@ Alternatively, you can install [Nix](https://nixos.org/) and then either
     binary into `result/bin` that you can then run directly or manually
     copy to `~/.local/bin` or another directory of your choosing.
 
+Run `cabal test` to run unit tests.
+
 ## User documentation
 
 `rash` is a state-saving pseudo-shell tailored for IRC bots, but
