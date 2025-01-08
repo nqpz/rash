@@ -1,6 +1,7 @@
 module Rash.IOStateKeeping
   ( dumpState
   , retrieveState
+  , cleanState
   ) where
 
 import Control.Monad (when)
@@ -75,6 +76,14 @@ retrieveNewState fname readArgs = do
       let (a, nVars) = asmParseToInternal $ RP.Assembly insts'
       s <- emptyState nVars
       pure (a, s)
+
+cleanState :: RI.RashPaths -> RI.IOStateKeeping -> IO ()
+cleanState paths = \case
+  RI.WriteAndReadFiles -> do
+    Dir.removeFile $ RI.pathASM paths
+    Dir.removeFile $ RI.pathState paths
+  RI.InMemory _ _ ->
+    pure ()
 
 emptyState :: Int -> IO RI.State
 emptyState nVars = do

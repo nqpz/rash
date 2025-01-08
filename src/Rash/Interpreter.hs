@@ -8,7 +8,6 @@ import Control.Exception
 
 import qualified Text.ShellEscape as TSE
 
-import qualified System.Directory as Dir
 import qualified System.Exit as Exit
 import qualified System.Process as Proc
 
@@ -21,7 +20,7 @@ import qualified Data.List as L
 
 import Rash.SequenceUtilities (Sequence, sequenceLength, sequenceToList)
 import qualified Rash.Representation.Internal as RI
-import Rash.IOStateKeeping (dumpState)
+import Rash.IOStateKeeping (dumpState, cleanState)
 
 
 -- SETTTINGS
@@ -161,8 +160,6 @@ interpretInstruction = \case
     setExitCode 0
 
   RI.Exit -> do
-    paths <- RI.contextPaths <$> ask
-    liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ do
-      Dir.removeFile $ RI.pathASM paths
-      Dir.removeFile $ RI.pathState paths
+    c <- ask
+    liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ cleanState (RI.contextPaths c) (RI.contextIOStateKeeping c)
     liftIO Exit.exitSuccess
