@@ -35,12 +35,12 @@ retrieveState paths fname readArgs = \case
       Exit.exitFailure
 
     if asmExists
-    then do
+      then do
       a <- read <$> (readFile $ RI.pathASM paths)
       i <- read <$> (readFile $ RI.pathState paths)
       s <- thawState i
       pure (a, s)
-    else do
+      else do
       res <- parseFile fname
       case res of
         Left errorMessage -> do
