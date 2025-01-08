@@ -56,10 +56,10 @@ runInterpM m context = runStateT (runReaderT (unInterpM m) context)
 setPC :: Int -> InterpM ()
 setPC pc = modify (\s -> s { RI.statePC = pc })
 
-modifyPC :: (Int -> Int) -> InterpM ()
-modifyPC f = do
+incrPC :: InterpM ()
+incrPC = do
   pc <- RI.statePC <$> get
-  setPC $ f pc
+  setPC (pc + 1)
 
 setExitCode :: Int -> InterpM ()
 setExitCode ec = modify (\s -> s { RI.statePrevExitCode = ec })
@@ -123,7 +123,7 @@ interpretInstruction = \case
       then do
       setVar var $ RI.contextReadArgs c
       put s { RI.stateJustRestarted = False }
-      modifyPC (+ 1)
+      incrPC
       setExitCode 0
 
       else do
@@ -133,26 +133,26 @@ interpretInstruction = \case
   RI.Run command -> do
     (ec, out) <- interpretCommand command
     liftIO $ putStr out
-    modifyPC (+ 1)
+    incrPC
     setExitCode ec
 
   RI.AssignRun v command -> do
     (ec, out) <- interpretCommand command
     setVar v $ T.pack $ L.dropWhileEnd isSpace out
-    modifyPC (+ 1)
+    incrPC
     setExitCode ec
 
   RI.Assign v parts -> do
     parts' <- evalParts parts
     setVar v parts'
-    modifyPC (+ 1)
+    incrPC
     setExitCode 0
 
   RI.JumpIfRetZero p -> do
     ec <- RI.statePrevExitCode <$> get
     if (ec == 0)
       then setPC p
-      else modifyPC (+ 1)
+      else incrPC
     setExitCode 0
 
   RI.Jump p -> do
