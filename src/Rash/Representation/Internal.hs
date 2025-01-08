@@ -12,6 +12,7 @@ module Rash.Representation.Internal
   ) where
 
 import qualified Data.Text as T
+import Data.IORef (IORef)
 
 import Rash.SequenceUtilities (Sequence, SequenceIO)
 
@@ -70,7 +71,10 @@ data Assembly = Assembly (Sequence Instruction)
               deriving (Read, Show)
 
 data IOStateKeeping = WriteAndReadFiles
-  deriving (Show)
+                    | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState))
+
+instance Show IOStateKeeping where
+  show = const "<IOStateKeeping>"
 
 data Context = Context { contextAssembly :: Assembly
                        , contextReadArgs :: T.Text

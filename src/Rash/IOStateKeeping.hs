@@ -8,18 +8,24 @@ import qualified System.Directory as Dir
 import qualified System.Exit as Exit
 import qualified Data.Text as T
 import qualified Data.Array.MArray as MA
+import Data.IORef (readIORef, writeIORef)
 
 import Rash.Parser (parseFile)
 import Rash.Representation.ParseToInternal (asmParseToInternal)
 import qualified Rash.Representation.Parse as RP
 import qualified Rash.Representation.Internal as RI
 
+-- TODO: Do we need to write the assembly every time if there are multiple reads?
 dumpState :: RI.RashPaths -> RI.Assembly -> RI.State -> RI.IOStateKeeping -> IO ()
-dumpState paths asm state = \case
-  RI.WriteAndReadFiles -> do
-    iState <- freezeState state
-    writeFile (RI.pathASM paths) (show asm) -- TODO: Do we need to write the assembly every time if there are multiple reads?
-    writeFile (RI.pathState paths) (show iState)
+dumpState paths asm state ioStateKeeping = do
+  iState <- freezeState state
+  case ioStateKeeping of
+    RI.WriteAndReadFiles -> do
+      writeFile (RI.pathASM paths) (show asm)
+      writeFile (RI.pathState paths) (show iState)
+    RI.InMemory asmMRef stateMRef -> do
+      writeIORef asmMRef (Just asm)
+      writeIORef stateMRef (Just iState)
 
 retrieveState :: RI.RashPaths -> FilePath -> String -> RI.IOStateKeeping -> IO (RI.Assembly, RI.State)
 retrieveState paths fname readArgs = \case
@@ -32,25 +38,43 @@ retrieveState paths fname readArgs = \case
     when (asmExists /= stateExists) $ do
       when asmExists $ Dir.removeFile $ RI.pathASM paths
       when stateExists $ Dir.removeFile $ RI.pathState paths
-      Exit.exitFailure
+      fail "unexpected"
 
     if asmExists
       then do
-      a <- read <$> (readFile $ RI.pathASM paths)
-      i <- read <$> (readFile $ RI.pathState paths)
-      s <- thawState i
-      pure (a, s)
+      asm <- read <$> (readFile $ RI.pathASM paths)
+      iState <- read <$> (readFile $ RI.pathState paths)
+      state <- thawState iState
+      pure (asm, state)
       else do
-      res <- parseFile fname
-      case res of
-        Left errorMessage -> do
-          print errorMessage
-          Exit.exitFailure
-        Right insts -> do
-          let insts' = RP.Assign "initial_arguments" [RP.TextPart readArgs] : insts
-          let (a, nVars) = asmParseToInternal $ RP.Assembly insts'
-          s <- emptyState nVars
-          pure (a, s)
+      retrieveNewState fname readArgs
+
+  RI.InMemory asmMRef stateMRef -> do
+    asmM <- readIORef asmMRef
+    stateM <- readIORef stateMRef
+    case (asmM, stateM) of
+      (Just asm, Just iState) -> do
+        state <- thawState iState
+        pure (asm, state)
+      (Nothing, Nothing) -> do
+        retrieveNewState fname readArgs
+      (Nothing, Just _) ->
+        fail "unexpected"
+      (Just _, Nothing) ->
+        fail "unexpected"
+
+retrieveNewState :: FilePath -> String -> IO (RI.Assembly, RI.State)
+retrieveNewState fname readArgs = do
+  res <- parseFile fname
+  case res of
+    Left errorMessage -> do
+      print errorMessage
+      Exit.exitFailure
+    Right insts -> do
+      let insts' = RP.Assign "initial_arguments" [RP.TextPart readArgs] : insts
+      let (a, nVars) = asmParseToInternal $ RP.Assembly insts'
+      s <- emptyState nVars
+      pure (a, s)
 
 emptyState :: Int -> IO RI.State
 emptyState nVars = do
