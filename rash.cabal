@@ -9,9 +9,14 @@ maintainer:         ngws@metanohi.name
 build-type:         Simple
 extra-doc-files:    README.md
 
-executable rash
+common common
     ghc-options: -Wall
-    main-is:          Main.hs
+    default-language: GHC2021
+    default-extensions:
+      LambdaCase
+
+library
+    import:           common
     build-depends:
         base >=4.14 && <4.20
       , containers
@@ -24,15 +29,34 @@ executable rash
       , directory
       , shell-escape
     hs-source-dirs:   src
+    exposed-modules:
+        Rash.Interpreter
+        Rash.Representation.Internal
+        Rash.StateDirGetter
     other-modules:
         Rash.Array
         Rash.Representation.Parse
-        Rash.Representation.Internal
         Rash.Representation.ParseToInternal
         Rash.Parser
         Rash.IOStateKeeping
-        Rash.Interpreter
-        Rash.StateDirGetter
-    default-language: GHC2021
-    default-extensions:
-      LambdaCase
+
+executable rash
+    import:           common
+    main-is:          Main.hs
+    build-depends:
+        base >=4.14 && <4.20
+      , filepath
+      , directory
+      , rash
+    hs-source-dirs:   app
+
+test-suite rash-test
+    import:           common
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Test.hs
+    other-modules:
+        InterpreterTests
+    build-depends:
+        base >=4.14 && <4.20
+      , rash
