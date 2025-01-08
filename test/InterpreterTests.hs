@@ -1,5 +1,5 @@
 module InterpreterTests
-  ( test
+  ( tests
   ) where
 
 import Control.Monad (when)
@@ -10,8 +10,12 @@ import Paths_rash (getDataFileName)
 import qualified Rash.Representation.Internal as RI
 import qualified Rash.Interpreter as Interp
 
-test :: IO ()
-test = do
+import Test.Tasty
+import Test.Tasty.HUnit
+
+addTest :: TestTree
+addTest =
+  testCase "add" $ do
   fname <- getDataFileName "test/programs/add.rash"
   asmMRef <- newIORef Nothing
   stateMRef <- newIORef Nothing
@@ -31,3 +35,6 @@ test = do
   check ["Please enter the second number.\n"]
   interpret ["91"]
   check ["4 + 91 = 95\n"]
+
+tests :: TestTree
+tests = testGroup "Interpreter tests" [addTest]
