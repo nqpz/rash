@@ -33,7 +33,6 @@ executable rash
         Rash.IOStateKeeping
         Rash.Interpreter
         Rash.StateDirGetter
-        Rash.Runner
     default-language: GHC2021
     default-extensions:
       LambdaCase
