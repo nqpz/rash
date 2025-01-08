@@ -96,7 +96,7 @@ interpretM nSteps
         case k of
           RI.WriteAndReadFiles ->
             liftIO Exit.exitSuccess
-          RI.InMemory _ _ ->
+          RI.InMemory _ _ _ ->
             pure ()
 
 evalParts :: Sequence RI.Part -> InterpM T.Text
@@ -141,7 +141,12 @@ interpretInstruction = \case
 
   RI.Run command -> do
     (ec, out) <- interpretCommand command
-    liftIO $ putStr out
+    k <- RI.contextIOStateKeeping <$> ask
+    case k of
+      RI.WriteAndReadFiles ->
+        liftIO $ putStr out
+      RI.InMemory _ _ add ->
+        liftIO $ add out
     incrPC
     setExitCode ec
     pure True
