@@ -2,6 +2,7 @@ module Rash.Interpreter
   ( interpret
   ) where
 
+import Control.Monad (void)
 import Control.Monad.Reader (ReaderT, MonadReader, runReaderT, ask)
 import Control.Monad.State (StateT, MonadState, runStateT, get, put, modify, MonadIO, liftIO)
 import Control.Exception
@@ -84,11 +85,13 @@ interpretM nSteps
     pc <- RI.statePC <$> get
     RI.Assembly insts <- RI.contextAssembly <$> ask
     if pc >= sequenceLength insts
-      then interpretInstruction RI.Exit
+      then void $ interpretInstruction RI.Exit
       else do
       let instCur = insts IA.! pc
-      interpretInstruction instCur
-      interpretM (nSteps + 1)
+      continue <- interpretInstruction instCur
+      if continue
+        then interpretM (nSteps + 1)
+        else liftIO Exit.exitSuccess
 
 evalParts :: Sequence RI.Part -> InterpM T.Text
 evalParts ps = do
@@ -113,7 +116,7 @@ interpretCommand (RI.Command cmd stdinM) = do
   stdinM' <- sequence (evalParts <$> stdinM)
   liftIO $ runProcess (T.unpack cmd') (T.unpack <$> stdinM')
 
-interpretInstruction :: RI.Instruction -> InterpM ()
+interpretInstruction :: RI.Instruction -> InterpM Bool
 interpretInstruction = \case
   RI.Read var -> do
     s <- get
@@ -125,28 +128,31 @@ interpretInstruction = \case
       put s { RI.stateJustRestarted = False }
       incrPC
       setExitCode 0
-
+      pure True
       else do
       liftIO $ dumpState (RI.contextPaths c) (RI.contextAssembly c) s (RI.contextIOStateKeeping c)
-      liftIO Exit.exitSuccess
+      pure False
 
   RI.Run command -> do
     (ec, out) <- interpretCommand command
     liftIO $ putStr out
     incrPC
     setExitCode ec
+    pure True
 
   RI.AssignRun v command -> do
     (ec, out) <- interpretCommand command
     setVar v $ T.pack $ L.dropWhileEnd isSpace out
     incrPC
     setExitCode ec
+    pure True
 
   RI.Assign v parts -> do
     parts' <- evalParts parts
     setVar v parts'
     incrPC
     setExitCode 0
+    pure True
 
   RI.JumpIfRetZero p -> do
     ec <- RI.statePrevExitCode <$> get
@@ -154,12 +160,14 @@ interpretInstruction = \case
       then setPC p
       else incrPC
     setExitCode 0
+    pure True
 
   RI.Jump p -> do
     setPC p
     setExitCode 0
+    pure True
 
   RI.Exit -> do
     c <- ask
     liftIO $ flip catch (\e -> (e :: IOException) `seq` pure ()) $ cleanState (RI.contextPaths c) (RI.contextIOStateKeeping c)
-    liftIO Exit.exitSuccess
+    pure False
