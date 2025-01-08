@@ -24,7 +24,7 @@ dumpState asm state ioStateKeeping = do
     RI.WriteAndReadFiles paths -> do
       writeFile (RI.pathASM paths) (show asm)
       writeFile (RI.pathState paths) (show iState)
-    RI.InMemory asmMRef stateMRef _ _ -> do
+    RI.InMemory asmMRef stateMRef _ -> do
       writeIORef asmMRef (Just asm)
       writeIORef stateMRef (Just iState)
 
@@ -50,7 +50,7 @@ retrieveState fname readArgs = \case
       else do
       retrieveNewState fname readArgs
 
-  RI.InMemory asmMRef stateMRef _ _ -> do
+  RI.InMemory asmMRef stateMRef _ -> do
     asmM <- readIORef asmMRef
     stateM <- readIORef stateMRef
     case (asmM, stateM) of
@@ -82,7 +82,7 @@ cleanState = \case
   RI.WriteAndReadFiles paths -> do
     Dir.removeFile $ RI.pathASM paths
     Dir.removeFile $ RI.pathState paths
-  RI.InMemory _ _ _ _ ->
+  RI.InMemory _ _ _ ->
     pure ()
 
 emptyState :: Int -> IO RI.State

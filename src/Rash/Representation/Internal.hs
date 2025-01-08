@@ -71,7 +71,7 @@ data Assembly = Assembly (Array Instruction)
               deriving (Read, Show)
 
 data IOStateKeeping = WriteAndReadFiles RashPaths
-                    | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState)) (String -> IO ()) (IO ())
+                    | InMemory (IORef (Maybe Assembly)) (IORef (Maybe IState)) (String -> IO ())
 
 instance Show IOStateKeeping where
   show = const "<IOStateKeeping>"
