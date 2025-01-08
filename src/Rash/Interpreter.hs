@@ -21,7 +21,7 @@ import qualified Data.List as L
 
 import Rash.Array (Array, sequenceLength, sequenceToList)
 import qualified Rash.Representation.Internal as RI
-import Rash.IOStateKeeping (dumpState, cleanState)
+import Rash.IOStateKeeping (retrieveState, dumpState, cleanState)
 
 
 -- SETTTINGS
@@ -75,8 +75,15 @@ setVar i t = do
   vars <- RI.stateVars <$> get
   liftIO $ MA.writeArray vars i t
 
-interpret :: RI.Context -> RI.State -> IO ()
-interpret c s = fst <$> runInterpM (interpretM 0) c s
+interpret :: FilePath -> [String] -> RI.IOStateKeeping -> IO ()
+interpret fname readArgs ioStateKeeping = do
+  let readArgs' = L.intercalate " " readArgs
+  (asm, state) <- retrieveState fname readArgs' ioStateKeeping
+  let context = RI.Context { RI.contextAssembly = asm
+                           , RI.contextReadArgs = T.pack readArgs'
+                           , RI.contextIOStateKeeping = ioStateKeeping
+                           }
+  fst <$> runInterpM (interpretM 0) context state
 
 interpretM :: Int -> InterpM ()
 interpretM nSteps
