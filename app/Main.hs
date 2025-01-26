@@ -13,6 +13,8 @@ main :: IO ()
 main = do
   args <- Env.getArgs
   case args of
+    ["--help"] -> do
+      putStrLn "usage: rash file.rash"
     (fname : readArgs) -> do
       paths <- rashPaths fname =<< getOrCreateStateDir
       interpret fname readArgs $ RI.WriteAndReadFiles paths
