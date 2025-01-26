@@ -63,4 +63,4 @@ test-suite rash-test
       , tasty
       , tasty-hunit
       , rash
-    data-files: test/programs/*
+    data-files: examples/*

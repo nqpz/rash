@@ -1,3 +1,5 @@
+#!/usr/bin/env rash
+
 >echo Please enter the first number.
 read number1
 >echo Please enter the second number.
