@@ -107,7 +107,8 @@ command = runNoStdin <|> runStdin
         runStdin :: Parser RP.Command
         runStdin = do
           symbol "<"
-          RP.Command <$> cmd <*> ((Just . stringParts) <$> many1 (satisfy (/= '>')))
+          body <- (Just . stringParts) <$> many1 (satisfy (/= '>'))
+          RP.Command <$> cmd <*> pure body
 
 assignInstruction :: Parser RP.Instruction
 assignInstruction = do
