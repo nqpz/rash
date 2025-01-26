@@ -5,11 +5,11 @@ its program state to a file, then terminating itself, and later being
 started again by the user, where it will read and continue from the
 saved program state.
 
-**rash is currently in the process of being migrated from a bespoke
-setup and into the wild, and does not work in a well-documented manner
-yet.**
+## Examples
 
-For examples programs, please see the results of this search for now:
+Example programs are located in the [examples](./examples) subdirectory.
+
+You can find more programs here:
 https://github.com/search?q=repo%3Aathas%2FEggsML+%22%23%21%2Fusr%2Fbin%2Fenv+rash%22&type=code
 
 ## Building and installing
