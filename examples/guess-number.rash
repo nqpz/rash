@@ -1,0 +1,28 @@
+#!/usr/bin/env rash
+
+# Find a random number
+numbers=>seq 1 100
+numbers_shuffled=<${numbers}>sort -R
+random_number=<${numbers_shuffled}>head -n1
+
+>echo Guess the number!
+
+:guess
+read guess
+>test ${guess} -lt ${random_number}
+jz too_low
+>test ${guess} -gt ${random_number}
+jz too_high
+>test ${guess} -eq ${random_number}
+jz correct
+
+:too_low
+>echo Your guess was too low, try again.
+j guess
+
+:too_high
+>echo Your guess was too high, try again.
+j guess
+
+:correct
+>echo Congratulations, you guessed the number!
