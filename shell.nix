@@ -4,6 +4,7 @@ pkgs.mkShell {
     haskell.ghc
     pkgs.cabal-install
     pkgs.zlib.dev
+    pkgs.coreutils
   ];
 
   shellHook = ''
