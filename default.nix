@@ -1,8 +1,8 @@
-with import ./nix/common.nix;
+with (import ./nix/common.nix (pkgs: pkgs));
 pkgs.haskell.lib.overrideCabal
   (haskell.callCabal2nix "rash" ./. { })
-  (_: {
-    configureFlags = [
+  (old: {
+    configureFlags = (old.configureFlags or []) ++ [
       "--ghc-option=-Werror"
       "--ghc-option=-O2"
     ];

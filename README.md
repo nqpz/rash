@@ -26,7 +26,8 @@ Alternatively, you can install [Nix](https://nixos.org/) and then either
     dependencies present, and then run `cabal install` there, or
   - run `nix-build` to build the program straight away, which will put a
     binary into `result/bin` that you can then run directly or manually
-    copy to `~/.local/bin` or another directory of your choosing.
+    copy to `~/.local/bin` or another directory of your choosing, or
+  - run `nix-build static.nix` to build a statically linked program.
 
 Run `cabal test` to run unit tests.
 

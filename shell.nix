@@ -1,4 +1,4 @@
-with import ./nix/common.nix;
+with (import ./nix/common.nix (pkgs: pkgs));
 pkgs.mkShell {
   buildInputs = [
     haskell.ghc
